@@ -1,0 +1,32 @@
+name: Check llm blueprint and Approve 
+
+on:
+  pull_request:
+    paths:
+      - 'examples/self-runner/**'
+
+jobs:
+  request-approval:
+    runs-on: ubuntu-lates
+    steps:
+      - name: Request maintainer approval
+        uses: hmarr/auto-approve-action@v3
+        if: github.event.pull_request.user.login == 'maintainer-username'
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+  
+  wait-for-approval:
+    needs: request-approval
+    runs-on: ubuntu-latest
+    steps:
+      - name: Wait for maintainer approval
+        uses: hmarr/auto-approve-action@v3
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+
+  run-tests:
+    needs: wait-for-approval
+    runs-on: ubuntu-latest
+    steps:
+      - name: Print Triggered Message
+        run: echo "triggered"
