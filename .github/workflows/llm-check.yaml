@@ -1,4 +1,4 @@
-name: Check llm blueprint and Approve 
+name: Check and Approve Changes
 
 on:
   pull_request:
@@ -7,14 +7,14 @@ on:
 
 jobs:
   request-approval:
-    runs-on: ubuntu-lates
+    runs-on: ubuntu-latest
     steps:
       - name: Request maintainer approval
         uses: hmarr/auto-approve-action@v3
         if: github.event.pull_request.user.login == 'maintainer-username'
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
-  
+
   wait-for-approval:
     needs: request-approval
     runs-on: ubuntu-latest
@@ -24,9 +24,13 @@ jobs:
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
 
-  run-tests:
+  run-llm-code-on-akash:
     needs: wait-for-approval
-    runs-on: ubuntu-latest
+    runs-on: self-runner
     steps:
-      - name: Print Triggered Message
-        run: echo "triggered"
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Run test-ci
+        run: |
+          echo "triggered"
