@@ -1,7 +1,6 @@
 name: Build and Publish Images
 
 on:
-  - push
   - pull_request
 
 jobs:
