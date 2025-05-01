@@ -40,6 +40,12 @@ echo "Create Kind cluster and load Kubeflow Trainer images"
 ${KIND} create cluster --image "${KIND_NODE_VERSION}"
 ${KIND} load docker-image ${CONTROLLER_MANAGER_CI_IMAGE}
 
+# ➕ Install JobSet CRD (v0.5)
+echo "Installing JobSet CRD (v0.5)..."
+CRD_URL="https://raw.githubusercontent.com/kubernetes-sigs/jobset/release-0.5/config/components/crd/bases/jobset.x-k8s.io_jobsets.yaml"
+kubectl replace -f "${CRD_URL}" 2>/dev/null || kubectl create -f "${CRD_URL}"
+echo "✅ JobSet CRD installed"
+
 echo "Deploy Kubeflow Trainer control plane"
 E2E_MANIFESTS_DIR="artifacts/e2e/manifests"
 mkdir -p "${E2E_MANIFESTS_DIR}"
