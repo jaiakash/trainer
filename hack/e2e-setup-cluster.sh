@@ -59,7 +59,7 @@ cat <<EOF > "${E2E_MANIFESTS_DIR}/kustomization.yaml"
     newTag: "${CONTROLLER_MANAGER_CI_IMAGE_TAG}"
 EOF
 
-kubectl apply --server-side -k "${E2E_MANIFESTS_DIR}"
+kubectl apply --server-side --force-conflicts -k "${E2E_MANIFESTS_DIR}"
 
 # We should wait until Deployment is in Ready status.
 echo "Wait for Kubeflow Trainer to be ready"
