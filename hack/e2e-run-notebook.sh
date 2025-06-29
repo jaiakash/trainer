@@ -37,9 +37,9 @@ if [ -z "${PAPERMILL_TIMEOUT}" ]; then
 fi
 
 print_results() {
-    kubectl get pods
+    kubectl get pods --all-namespaces
     kubectl describe pod
-    kubectl describe trainjob
+    kubectl describe trainjob --all
     kubectl logs -n kubeflow-system -l app.kubernetes.io/name=trainer
     kubectl logs -l jobset.sigs.k8s.io/replicatedjob-name=trainer-node,batch.kubernetes.io/job-completion-index=0 --tail -1
     kubectl wait trainjob --for=condition=Complete --all --timeout 3s
