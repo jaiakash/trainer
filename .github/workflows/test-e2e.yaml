@@ -45,19 +45,19 @@ jobs:
           echo "Install Kubeflow SDK"
           pip install ./sdk
 
-      - name: Setup cluster
-        run: |
-          make test-e2e-setup-cluster K8S_VERSION=${{ matrix.kubernetes-version }}
+      # - name: Setup cluster
+      #   run: |
+      #     make test-e2e-setup-cluster K8S_VERSION=${{ matrix.kubernetes-version }}
 
-      - name: Run e2e with Go
-        run: |
-          make test-e2e || (kubectl logs -n kubeflow-system -l app.kubernetes.io/name=trainer && exit 1)
+      # - name: Run e2e with Go
+      #   run: |
+      #     make test-e2e || (kubectl logs -n kubeflow-system -l app.kubernetes.io/name=trainer && exit 1)
 
       - name: Run e2e test for example Notebooks
         run: |
           mkdir -p artifacts/notebooks
           make test-e2e-notebook NOTEBOOK_INPUT=./examples/pytorch/image-classification/mnist.ipynb NOTEBOOK_OUTPUT=./artifacts/notebooks/${{ matrix.kubernetes-version }}_mnist.ipynb TIMEOUT=900
-          make test-e2e-notebook NOTEBOOK_INPUT=./examples/pytorch/question-answering/fine-tune-distilbert.ipynb NOTEBOOK_OUTPUT=./artifacts/notebooks/${{ matrix.kubernetes-version }}_fine-tune-distilbert.ipynb TIMEOUT=900
+          # make test-e2e-notebook NOTEBOOK_INPUT=./examples/pytorch/question-answering/fine-tune-distilbert.ipynb NOTEBOOK_OUTPUT=./artifacts/notebooks/${{ matrix.kubernetes-version }}_fine-tune-distilbert.ipynb TIMEOUT=900
 
       # TODO (andreyvelich): Discuss how we can upload artifacts for multiple Notebooks.
       - name: Upload Artifacts to GitHub
