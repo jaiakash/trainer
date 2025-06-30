@@ -1,0 +1,56 @@
+name: Self Runner Approval Workflow
+
+on:
+  pull_request:
+    paths:
+      - "examples/**"
+
+jobs:
+  check-and-request-approval:
+    if: github.event.pull_request.user.login != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Request approval from @jaiakash
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const { owner, repo, number } = context.issue;
+            const commentBody = `:lock: Changes detected in \`examples\`.
+            Hi @jaiakash, please approve by commenting:
+            \`\`\`
+            /run-self-runner
+            \`\`\`
+            This will trigger the self-runner job on OKE infra.`;
+                        await github.rest.issues.createComment({
+                          owner,
+                          repo,
+                          issue_number: number,
+                          body: commentBody
+            });
+
+  wait-for-approval:
+    name: Wait for approval from @jaiakash
+    needs: check-and-request-approval
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - name: Wait for comment from jaiakash
+        id: approval-check
+        uses: peter-evans/wait-for-comment@v3
+        with:
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+          issue-number: ${{ github.event.pull_request.number }}
+          filter-author: "jaiakash"
+          body-includes: "/run-self-runner"
+          reaction: "eyes"
+
+  run-on-self-hosted:
+    name: Run on OKE Self-Hosted Runner
+    needs: wait-for-approval
+    runs-on: self-hosted
+    steps:
+      - name: Run placeholder on self-hosted runner
+        run: |
+          echo "✅ Self-runner triggered and executing on OKE infrastructure."
+
