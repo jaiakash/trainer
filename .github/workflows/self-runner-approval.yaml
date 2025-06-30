@@ -35,22 +35,21 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 60
     steps:
-      - name: Wait for comment from jaiakash
-        id: approval-check
-        uses: peter-evans/wait-for-comment@v3
+      - name: Poll for `/run-self-runner` by @jaiakash
+        id: find-approval
+        uses: peter-evans/find-comment@v3
         with:
-          repo-token: ${{ secrets.GITHUB_TOKEN }}
+          token: ${{ secrets.GITHUB_TOKEN }}
           issue-number: ${{ github.event.pull_request.number }}
-          filter-author: "jaiakash"
-          body-includes: "/run-self-runner"
-          reaction: "eyes"
+          comment-author: 'jaiakash'
+          body-includes: '/run-self-runner'
 
-  run-on-self-hosted:
-    name: Run on OKE Self-Hosted Runner
-    needs: wait-for-approval
-    runs-on: self-hosted
-    steps:
-      - name: Run placeholder on self-hosted runner
+      - name: Check approval found
         run: |
-          echo "✅ Self-runner triggered and executing on OKE infrastructure."
+          if [[ -z "${{ steps.find-approval.outputs.comment-id }}" ]]; then
+            echo "❌ No approval found within timeout."
+            exit 1
+          else
+            echo "✅ Approval found. comment ID=${{ steps.find-approval.outputs.comment-id }}"
+          fi
 
