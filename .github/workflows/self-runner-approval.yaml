@@ -16,18 +16,21 @@ jobs:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
             const { owner, repo, number } = context.issue;
-            const commentBody = `:lock: Changes detected in \`examples\`.
+            const commentBody = `🔒 Changes detected in \`examples\`.
+
             Hi @jaiakash, please approve by commenting:
+            
             \`\`\`
             /run-self-runner
             \`\`\`
+            
             This will trigger the self-runner job on OKE infra.`;
                         await github.rest.issues.createComment({
                           owner,
                           repo,
                           issue_number: number,
                           body: commentBody
-            });
+                        });
 
   wait-for-approval:
     name: Wait for approval from @jaiakash
@@ -43,13 +46,26 @@ jobs:
           issue-number: ${{ github.event.pull_request.number }}
           comment-author: 'jaiakash'
           body-includes: '/run-self-runner'
+          sort-order: desc
+          direction: first
 
       - name: Check approval found
         run: |
           if [[ -z "${{ steps.find-approval.outputs.comment-id }}" ]]; then
-            echo "❌ No approval found within timeout."
+            echo "❌ No approval comment found. Exiting."
             exit 1
           else
-            echo "✅ Approval found. comment ID=${{ steps.find-approval.outputs.comment-id }}"
+            echo "✅ Approval comment found from jaiakash. Proceeding."
           fi
 
+  run-on-self-hosted:
+    name: Run on OKE Self-Hosted Runner
+    needs: wait-for-approval
+    runs-on: self-hosted
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Run placeholder on self-hosted runner
+        run: |
+          echo "✅ Self-runner triggered and executing on OKE infrastructure."
