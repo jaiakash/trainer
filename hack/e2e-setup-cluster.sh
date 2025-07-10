@@ -28,6 +28,9 @@ KIND_NODE_VERSION=kindest/node:v${K8S_VERSION}
 NAMESPACE="kubeflow-system"
 TIMEOUT="5m"
 
+## Sudo docker to make sure Kind can access GPU
+alias docker="sudo docker"
+
 # Kubeflow Trainer images.
 # TODO (andreyvelich): Support initializers images.
 CONTROLLER_MANAGER_CI_IMAGE_NAME="ghcr.io/kubeflow/trainer/trainer-controller-manager"
