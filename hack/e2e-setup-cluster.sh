@@ -30,12 +30,13 @@ TIMEOUT="5m"
 
 ## Sudo docker to make sure Kind can access GPU
 alias docker="sudo docker"
+alias kubectl="sudo kubectl"
+alias kind="sudo kind"
 
 # Kubeflow Trainer images.
 # TODO (andreyvelich): Support initializers images.
 CONTROLLER_MANAGER_CI_IMAGE_NAME="ghcr.io/kubeflow/trainer/trainer-controller-manager"
-CONTROLLER_MANAGER_CI_IMAGE_TAG="test"
-CONTROLLER_MANAGER_CI_IMAGE="${CONTROLLER_MANAGER_CI_IMAGE_NAME}:${CONTROLLER_MANAGER_CI_IMAGE_TAG}"
+CONTROLLER_MANAGER_CI_IMAGE=${CONTROLLER_MANAGER_CI_IMAGE_NAME}
 echo "Build Kubeflow Trainer images"
 docker build . -f cmd/trainer-controller-manager/Dockerfile -t ${CONTROLLER_MANAGER_CI_IMAGE}
 
@@ -53,7 +54,6 @@ cat <<EOF >"${E2E_MANIFESTS_DIR}/kustomization.yaml"
   - ../../../manifests/overlays/manager
   images:
   - name: "${CONTROLLER_MANAGER_CI_IMAGE_NAME}"
-    newTag: "${CONTROLLER_MANAGER_CI_IMAGE_TAG}"
 EOF
 
 kubectl apply --server-side -k "${E2E_MANIFESTS_DIR}"
