@@ -49,8 +49,7 @@ sudo systemctl restart docker
 
 # Install nvkind and create a Kind cluster with GPU support.
 echo "Install nvkind"
-go install github.com/NVIDIA/nvkind/cmd/nvkind@latest
-sudo mv ~/go/bin/nvkind /usr/local/bin/nvkind
+sudo go install github.com/NVIDIA/nvkind/cmd/nvkind@latest
 
 nvkind cluster create --image "${KIND_NODE_VERSION}"
 CLUSTER_NAME=$(kind get clusters | grep nvkind)
