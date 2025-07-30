@@ -61,6 +61,10 @@ jobs:
           make test-e2e-notebook NOTEBOOK_INPUT=./examples/pytorch/image-classification/mnist.ipynb NOTEBOOK_OUTPUT=./artifacts/notebooks/${{ matrix.kubernetes-version }}_mnist.ipynb TIMEOUT=900
           make test-e2e-notebook NOTEBOOK_INPUT=./examples/pytorch/question-answering/fine-tune-distilbert.ipynb NOTEBOOK_OUTPUT=./artifacts/notebooks/${{ matrix.kubernetes-version }}_fine-tune-distilbert.ipynb TIMEOUT=900
 
+      - name: Delete cluster
+        run: |
+          make test-e2e-delete-cluster K8S_VERSION=${{ matrix.kubernetes-version }}
+
       # TODO (andreyvelich): Discuss how we can upload artifacts for multiple Notebooks.
       - name: Upload Artifacts to GitHub
         uses: actions/upload-artifact@v4
