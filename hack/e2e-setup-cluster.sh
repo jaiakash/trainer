@@ -22,7 +22,6 @@ set -o pipefail
 set -x
 
 # Configure variables.
-KIND=${KIND:-./bin/kind}
 K8S_VERSION=${K8S_VERSION:-1.32.0}
 KIND_NODE_VERSION=kindest/node:v${K8S_VERSION}
 NAMESPACE="kubeflow-system"
@@ -32,6 +31,8 @@ TIMEOUT="5m"
 alias docker="sudo docker"
 alias kubectl="sudo kubectl"
 alias kind="sudo kind"
+alias helm="sudo helm"
+alias nvkind="sudo nvkind"
 
 # Kubeflow Trainer images.
 # TODO (andreyvelich): Support initializers images.
@@ -40,14 +41,49 @@ CONTROLLER_MANAGER_CI_IMAGE=${CONTROLLER_MANAGER_CI_IMAGE_NAME}
 echo "Build Kubeflow Trainer images"
 docker build . -f cmd/trainer-controller-manager/Dockerfile -t ${CONTROLLER_MANAGER_CI_IMAGE}
 
-echo "Create Kind cluster and load Kubeflow Trainer images"
-${KIND} create cluster --image "${KIND_NODE_VERSION}"
-${KIND} load docker-image ${CONTROLLER_MANAGER_CI_IMAGE}
+# Install gpu-operator to make sure we can run GPU workloads.
 
+sudo nvidia-ctk runtime configure --runtime=docker --set-as-default --cdi.enabled
+sudo nvidia-ctk config --set accept-nvidia-visible-devices-as-volume-mounts=true --in-place
+sudo systemctl restart docker
+
+# Install nvkind and create a Kind cluster with GPU support.
+echo "Install nvkind"
+go install github.com/NVIDIA/nvkind/cmd/nvkind@latest
+sudo mv "$HOME/go/bin/nvkind" /usr/local/bin/nvkind
+
+nvkind cluster create --image "${KIND_NODE_VERSION}"
+CLUSTER_NAME=$(kind get clusters | grep nvkind)
+nvkind cluster print-gpus
+
+echo "Install NVIDIA GPU Operator"
+kubectl create ns gpu-operator
+kubectl label --overwrite ns gpu-operator pod-security.kubernetes.io/enforce=privileged
+
+helm repo add nvidia https://helm.ngc.nvidia.com/nvidia && helm repo update
+
+helm install --wait --generate-name \
+    -n gpu-operator --create-namespace \
+    nvidia/gpu-operator \
+    --version=v25.3.2
+
+# Validation steps for GPU operator installation
+kubectl get ns gpu-operator
+kubectl get ns gpu-operator --show-labels | grep pod-security.kubernetes.io/enforce=privileged
+helm list -n gpu-operator
+kubectl wait --for=condition=Available --timeout=300s -n gpu-operator deployment -l app.kubernetes.io/name=nvidia-operator
+kubectl get pods -n gpu-operator
+kubectl get nodes -o=custom-columns=NAME:.metadata.name,GPU:.status.allocatable.nvidia\.com/gpu
+
+# Load Kubeflow Trainer images
+echo "Load Kubeflow Trainer images"
+kind load docker-image "${CONTROLLER_MANAGER_CI_IMAGE}" --name "${CLUSTER_NAME}"
+
+# Deploy Kubeflow Trainer control plane
 echo "Deploy Kubeflow Trainer control plane"
 E2E_MANIFESTS_DIR="artifacts/e2e/manifests"
-mkdir -p "${E2E_MANIFESTS_DIR}"
-cat <<EOF >"${E2E_MANIFESTS_DIR}/kustomization.yaml"
+sudo mkdir -p "${E2E_MANIFESTS_DIR}"
+sudo cat <<EOF >"${E2E_MANIFESTS_DIR}/kustomization.yaml"
   apiVersion: kustomize.config.k8s.io/v1beta1
   kind: Kustomization
   resources:
@@ -88,6 +124,6 @@ kubectl apply --server-side -k manifests/overlays/runtimes || (
 # TODO (andreyvelich): Discuss how we want to pre-load runtime images to the Kind cluster.
 TORCH_RUNTIME_IMAGE=pytorch/pytorch:2.7.1-cuda12.8-cudnn9-runtime
 docker pull ${TORCH_RUNTIME_IMAGE}
-${KIND} load docker-image ${TORCH_RUNTIME_IMAGE}
+kind load docker-image ${TORCH_RUNTIME_IMAGE} --name ${CLUSTER_NAME}
 
 print_cluster_info
