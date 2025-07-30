@@ -70,7 +70,9 @@ helm install --wait --generate-name \
 kubectl get ns gpu-operator
 kubectl get ns gpu-operator --show-labels | grep pod-security.kubernetes.io/enforce=privileged
 helm list -n gpu-operator
-kubectl wait --for=condition=Ready --timeout=3000s pod --all -n gpu-operator
+kubectl get pods -n gpu-operator -o name | while read pod; do
+  kubectl wait --for=condition=Ready --timeout=300s "$pod" -n gpu-operator || echo "$pod failed to become Ready"
+done
 kubectl get pods -n gpu-operator
 kubectl get nodes -o=custom-columns=NAME:.metadata.name,GPU:.status.allocatable.nvidia\.com/gpu
 
