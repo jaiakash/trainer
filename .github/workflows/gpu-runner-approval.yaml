@@ -1,20 +1,20 @@
-name: Self Runner Approval Workflow
-
+name: Create QA environment
 on:
   issue_comment:
     types: [created]
 
 jobs:
-  trigger-self-runner:
-    if: |
-      github.event.issue.pull_request &&
-      github.event.comment.user.login == 'jaiakash' &&
-      contains(github.event.comment.body, '/run-gpu-runner')
-    runs-on: self-hosted
+  qa-env:
+    runs-on: ubuntu-latest
+    outputs:
+      conclusion: ${{ steps.wait-for-test.conclusion }}
     steps:
-      - name: Debug Event Info
-        run: echo "${{ toJson(github.event) }}"
-        
-      - uses: actions/checkout@v4
+      # - name: Dump GitHub context
+      #   env:
+      #     GITHUB_CONTEXT: ${{ toJson(github) }}
+      #   run: echo "$GITHUB_CONTEXT"
 
-      - run: echo "✅ Running on OKE self-hosted runner triggered by @jaiakash."
+      - name: Wait for Travis
+        id: wait-for-test
+        if: ${{ github.event.issue.pull_request && contains(github.event.comment.body, '/qa') }}
+        run: echo "Event triggered!"
