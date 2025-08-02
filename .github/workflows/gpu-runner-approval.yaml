@@ -33,6 +33,28 @@ jobs:
 
                 This will trigger the self-runner job on OKE infra.`
                             });
+  debug:
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Print event name
+        run: |
+          echo "Event: ${{ github.event_name }}""
+      
+      - name: Print if it's a PR comment
+        run: |
+          if [ -n "${{ github.event.issue.pull_request.url }}" ]; then
+            echo "PR URL: ${{ github.event.issue.pull_request.url }}"
+          else
+            echo "PR URL: Not a PR"
+          fi
+      
+      - name: Print comment user
+        run: "echo \"User: ${{ github.event.comment.user.login }}\""
+      
+      - name: Print comment body
+        run: |
+          echo "Body: ${{ github.event.comment.body }}"
 
   trigger-self-runner:
     if: |
