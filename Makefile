@@ -18,10 +18,10 @@ TRAINER_CHART_DIR := $(PROJECT_DIR)/charts/kubeflow-trainer
 LOCALBIN ?= $(PROJECT_DIR)/bin
 
 # Tool versions
-K8S_VERSION ?= 1.32.0
+K8S_VERSION ?= 1.33.0
 GINKGO_VERSION ?= $(shell go list -m -f '{{.Version}}' github.com/onsi/ginkgo/v2)
-ENVTEST_VERSION ?= release-0.20
-CONTROLLER_GEN_VERSION ?= v0.17.2
+ENVTEST_VERSION ?= release-0.21
+CONTROLLER_GEN_VERSION ?= v0.18.0
 KIND_VERSION ?= $(shell go list -m -f '{{.Version}}' sigs.k8s.io/kind)
 HELM_VERSION ?= v3.15.3
 HELM_UNITTEST_VERSION ?= 0.5.1
@@ -119,6 +119,7 @@ manifests: controller-gen ## Generate manifests.
 		output:crd:artifacts:config=manifests/base/crds \
 		output:rbac:artifacts:config=manifests/base/rbac \
 		output:webhook:artifacts:config=manifests/base/webhook
+	cp -f manifests/base/crds/trainer.kubeflow.org_*.yaml $(TRAINER_CHART_DIR)/crds/
 
 .PHONY: generate
 generate: go-mod-download manifests ## Generate APIs.
@@ -155,7 +156,7 @@ test: ## Run Go unit test.
 
 .PHONY: test-integration
 test-integration: ginkgo envtest jobset-operator-crd scheduler-plugins-crd ## Run Go integration test.
-	KUBEBUILDER_ASSETS="$(shell $(ENVTEST) use $(K8S_VERSION) -p path)" $(GINKGO) -v ./test/integration/... -coverprofile cover.out
+	KUBEBUILDER_ASSETS="$(shell $(ENVTEST) use $(K8S_VERSION) -p path)" $(GINKGO) -coverprofile cover.out -v ./test/integration/...
 
 .PHONY: test-python
 test-python: ## Run Python unit test.
