@@ -2,12 +2,16 @@ name: Self Runner Approval Workflow
 
 on:
   pull_request:
+    types: [opened, synchronize]
     paths:
       - "examples/**"
 
+  issue_comment:
+    types: [created]
+
 jobs:
   request-approval:
-    if: github.event.pull_request.user.login != 'github-actions[bot]'
+    if: github.event_name == 'pull_request' && github.event.pull_request.user.login != 'github-actions[bot]'
     runs-on: ubuntu-latest
     steps:
       - name: Request approval from @jaiakash
@@ -19,34 +23,22 @@ jobs:
               ...context.issue,
               body: `🔒 Changes detected in \`examples\`.
 
-            Hi @jaiakash, please approve by commenting:
+                Hi @jaiakash, please approve by commenting:
 
-            \`\`\`
-            /run-gpu-runner
-            \`\`\`
+                \`\`\`
+                /run-gpu-runner
+                \`\`\`
 
-            This will trigger the self-runner job on OKE infra.`
-                        });
+                This will trigger the self-runner job on OKE infra.`
+                            });
 
-  wait-for-approval:
-    needs: request-approval
-    runs-on: ubuntu-latest
-    timeout-minutes: 60
-    steps:
-      - name: Wait for `/run-gpu-runner` from @jaiakash
-        uses: peter-evans/wait-for-comments@v2
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          issue-number: ${{ github.event.pull_request.number }}
-          author: "jaiakash"
-          body-includes: "/run-gpu-runner"
-          wait-timeout: 3600
-          check-interval: 15
-
-  run-on-self-hosted:
-    name: Run on OKE Self-Hosted Runner
-    needs: wait-for-approval
+  trigger-self-runner:
+    if: |
+      github.event_name == 'issue_comment' &&
+      github.event.issue.pull_request &&
+      github.event.comment.user.login == 'jaiakash' &&
+      contains(github.event.comment.body, '/run-gpu-runner')
     runs-on: self-hosted
     steps:
       - uses: actions/checkout@v4
-      - run: echo "✅ Running on OKE self-hosted runner."
+      - run: echo "✅ Running on OKE self-hosted runner triggered by @jaiakash."
