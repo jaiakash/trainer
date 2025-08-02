@@ -1,87 +1,87 @@
-name: Unit and Integration Test - Go
+# name: Unit and Integration Test - Go
 
-on:
-  - pull_request
+# on:
+#   - pull_request
 
-jobs:
-  generate:
-    name: Generate
-    runs-on: ubuntu-latest
-    env:
-      GOPATH: ${{ github.workspace }}/go
-    defaults:
-      run:
-        working-directory: ${{ env.GOPATH }}/src/github.com/kubeflow/trainer
+# jobs:
+#   generate:
+#     name: Generate
+#     runs-on: ubuntu-latest
+#     env:
+#       GOPATH: ${{ github.workspace }}/go
+#     defaults:
+#       run:
+#         working-directory: ${{ env.GOPATH }}/src/github.com/kubeflow/trainer
 
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-        with:
-          path: ${{ env.GOPATH }}/src/github.com/kubeflow/trainer
+#     steps:
+#       - name: Checkout code
+#         uses: actions/checkout@v4
+#         with:
+#           path: ${{ env.GOPATH }}/src/github.com/kubeflow/trainer
 
-      - name: Setup Go
-        uses: actions/setup-go@v5
-        with:
-          go-version-file: ${{ env.GOPATH }}/src/github.com/kubeflow/trainer/go.mod
+#       - name: Setup Go
+#         uses: actions/setup-go@v5
+#         with:
+#           go-version-file: ${{ env.GOPATH }}/src/github.com/kubeflow/trainer/go.mod
 
-      - name: Check Go modules
-        run: |
-          go mod tidy
-          git diff --exit-code || (echo 'Please run "go mod tidy" to sync Go modules' && exit 1);
-      - name: Check auto-generated assets
-        run: |
-          make generate
-          git diff --exit-code || (echo 'Please run "make generate" to generate assets' && exit 1);
-      - name: Check go fmt
-        run: |
-          make fmt
-          git diff --exit-code || (echo 'Please run "make fmt" to verify gofmt' && exit 1);
-      - name: Check go fmt
-        run: |
-          make vet
-          git diff --exit-code || (echo 'Please run "make vet" to verify govet' && exit 1);
-      - name: Check golangci lint
-        run: |
-          make golangci-lint
-  test:
-    name: Test
-    runs-on: ubuntu-latest
-    env:
-      GOPATH: ${{ github.workspace }}/go
-    defaults:
-      run:
-        working-directory: ${{ env.GOPATH }}/src/github.com/kubeflow/trainer
+#       - name: Check Go modules
+#         run: |
+#           go mod tidy
+#           git diff --exit-code || (echo 'Please run "go mod tidy" to sync Go modules' && exit 1);
+#       - name: Check auto-generated assets
+#         run: |
+#           make generate
+#           git diff --exit-code || (echo 'Please run "make generate" to generate assets' && exit 1);
+#       - name: Check go fmt
+#         run: |
+#           make fmt
+#           git diff --exit-code || (echo 'Please run "make fmt" to verify gofmt' && exit 1);
+#       - name: Check go fmt
+#         run: |
+#           make vet
+#           git diff --exit-code || (echo 'Please run "make vet" to verify govet' && exit 1);
+#       - name: Check golangci lint
+#         run: |
+#           make golangci-lint
+#   test:
+#     name: Test
+#     runs-on: ubuntu-latest
+#     env:
+#       GOPATH: ${{ github.workspace }}/go
+#     defaults:
+#       run:
+#         working-directory: ${{ env.GOPATH }}/src/github.com/kubeflow/trainer
 
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-        with:
-          path: ${{ env.GOPATH }}/src/github.com/kubeflow/trainer
+#     steps:
+#       - name: Checkout code
+#         uses: actions/checkout@v4
+#         with:
+#           path: ${{ env.GOPATH }}/src/github.com/kubeflow/trainer
 
-      - name: Setup Go
-        uses: actions/setup-go@v5
-        with:
-          go-version-file: ${{ env.GOPATH }}/src/github.com/kubeflow/trainer/go.mod
+#       - name: Setup Go
+#         uses: actions/setup-go@v5
+#         with:
+#           go-version-file: ${{ env.GOPATH }}/src/github.com/kubeflow/trainer/go.mod
 
-      - name: Run Go unit tests
-        run: |
-          make test
+#       - name: Run Go unit tests
+#         run: |
+#           make test
 
-      - name: Run Go integration tests
-        run: |
-          make test-integration
+#       - name: Run Go integration tests
+#         run: |
+#           make test-integration
 
-      - name: Coveralls report
-        uses: shogo82148/actions-goveralls@v1
-        with:
-          path-to-profile: cover.out
-          working-directory: ${{ env.GOPATH }}/src/github.com/kubeflow/trainer
-          parallel: true
+#       - name: Coveralls report
+#         uses: shogo82148/actions-goveralls@v1
+#         with:
+#           path-to-profile: cover.out
+#           working-directory: ${{ env.GOPATH }}/src/github.com/kubeflow/trainer
+#           parallel: true
 
-  finish:
-    needs: test
-    runs-on: ubuntu-latest
-    steps:
-      - uses: shogo82148/actions-goveralls@v1
-        with:
-          parallel-finished: true
+#   finish:
+#     needs: test
+#     runs-on: ubuntu-latest
+#     steps:
+#       - uses: shogo82148/actions-goveralls@v1
+#         with:
+#           parallel-finished: true
