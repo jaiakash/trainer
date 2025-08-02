@@ -1,46 +1,20 @@
 name: Self Runner Approval Workflow
 
 on:
-  pull_request:
-    types: [opened, synchronize]
-    paths:
-      - "examples/**"
-
   issue_comment:
     types: [created]
 
 jobs:
-  request-approval:
-    if: github.event_name == 'pull_request' && github.event.pull_request.user.login != 'github-actions[bot]'
-    runs-on: ubuntu-latest
-    steps:
-      - name: Request approval from @jaiakash
-        uses: actions/github-script@v7
-        with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          script: |
-            await github.rest.issues.createComment({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              issue_number: context.payload.pull_request.number,
-              body: `🔒 Changes detected in \`examples\`.
-
-                Hi @jaiakash, please approve by commenting:
-
-                \`\`\`
-                /run-gpu-runner
-                \`\`\`
-
-                This will trigger the self-runner job on OKE infra.`
-                            });
-
   trigger-self-runner:
     if: |
-      github.event_name == 'issue_comment' &&
       github.event.issue.pull_request &&
       github.event.comment.user.login == 'jaiakash' &&
       contains(github.event.comment.body, '/run-gpu-runner')
     runs-on: self-hosted
     steps:
+      - name: Debug Event Info
+        run: echo "${{ toJson(github.event) }}"
+        
       - uses: actions/checkout@v4
+
       - run: echo "✅ Running on OKE self-hosted runner triggered by @jaiakash."
