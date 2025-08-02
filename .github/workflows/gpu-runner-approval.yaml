@@ -1,0 +1,20 @@
+name: Self Runner Approval Workflow
+
+on:
+  issue_comment:
+    types: [created]
+
+jobs:
+  trigger-self-runner:
+    if: |
+      github.event.issue.pull_request &&
+      github.event.comment.user.login == 'jaiakash' &&
+      contains(github.event.comment.body, '/run-gpu-runner')
+    runs-on: self-hosted
+    steps:
+      - name: Debug Event Info
+        run: echo "${{ toJson(github.event) }}"
+        
+      - uses: actions/checkout@v4
+
+      - run: echo "✅ Running on OKE self-hosted runner triggered by @jaiakash."
