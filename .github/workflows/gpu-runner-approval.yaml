@@ -24,22 +24,21 @@ jobs:
               repo: context.repo.repo,
               issue_number: context.payload.pull_request.number,
               body: `🔒 Changes detected in \`examples\`.
+              Hi @jaiakash, please approve by commenting:
 
-                Hi @jaiakash, please approve by commenting:
+              \`\`\`
+              /run-gpu-runner
+              \`\`\`
 
-                \`\`\`
-                /run-gpu-runner
-                \`\`\`
-
-                This will trigger the self-runner job on OKE infra.`
-                            });
+              This will trigger the self-runner job on OKE infra.`
+                          });
   debug:
     if: always()
     runs-on: ubuntu-latest
     steps:
       - name: Print event name
         run: |
-          echo "Event: ${{ github.event_name }}""
+          echo "Event: ${{ github.event_name }}"
       
       - name: Print if it's a PR comment
         run: |
@@ -50,7 +49,7 @@ jobs:
           fi
       
       - name: Print comment user
-        run: "echo \"User: ${{ github.event.comment.user.login }}\""
+        run: "echo User: ${{ github.event.comment.user.login }}"
       
       - name: Print comment body
         run: |
