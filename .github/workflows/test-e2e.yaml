@@ -42,8 +42,8 @@
 #           echo "Install Papermill"
 #           pip install papermill==2.6.0 jupyter==1.1.1 ipykernel==6.29.5
 
-#           echo "Install Kubeflow SDK"
-#           pip install git+https://github.com/kubeflow/sdk.git@main#subdirectory=python
+          echo "Install Kubeflow SDK"
+          pip install git+https://github.com/kubeflow/sdk.git@main
 
 
 #       # - name: Setup cluster
