@@ -1,28 +1,82 @@
-name: E2E Test
+name: GPU E2E Test
+
+permissions:
+  pull-requests: write
+  issues: write
+  contents: read
 
 on:
-  - push
-  - pull_request
+  pull_request_target:
+    types:
+      - labeled
+      - synchronize
+
+env:
+  GOPATH: ${{ github.workspace }}/go
 
 jobs:
+  request-label:
+    name: Request GPU Runner Label
+    runs-on: ubuntu-latest
+    outputs:
+      has_label: ${{ steps.label-check.outputs.has_label }}
+    steps:
+      - name: Checkout PR branch
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          fetch-depth: 0
+
+      - name: Detect changes in LLM blueprint directories
+        id: changes
+        run: |
+          if git diff --name-only ${{ github.event.pull_request.base.sha }} HEAD | grep -E '^examples/(deepseed|torchtune)/'; then
+            echo "found_changes=true" >> $GITHUB_OUTPUT
+          else
+            echo "found_changes=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Check for ok-to-test-gpu-runner label
+        id: label-check
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const { data: labels } = await github.rest.issues.listLabelsOnIssue({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number
+            });
+            core.setOutput('has_label', labels.some(l => l.name === 'ok-to-test-gpu-runner') ? 'true' : 'false');
+
+      - name: Post comment requesting label
+        if: steps.changes.outputs.found_changes == 'true' && steps.label-check.outputs.has_label == 'false'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              body: `Hello @jaiakash 👋,
+              Changes were detected in the LLM blueprint directories (\`examples/deepseed\` or \`examples/torchtune\`).
+              To run the test on GPU infra, please add the **ok-to-test-gpu-runner** label to this PR.`
+            });
+
   e2e-test:
     name: E2E Test
+    needs: request-label
+    if: needs.request-label.outputs.has_label == 'true'
     runs-on: self-hosted
-
-    env:
-      GOPATH: ${{ github.workspace }}/go
     defaults:
       run:
         working-directory: ${{ env.GOPATH }}/src/github.com/kubeflow/trainer
-
     strategy:
       fail-fast: false
       matrix:
-        # Kubernetes versions for e2e tests on Kind cluster.
-        kubernetes-version: ["1.30.0", "1.31.0", "1.32.3", "1.33.1"]
+        kubernetes-version: ["1.33.1"]
 
     steps:
-      - name: Check out code
+      - name: Checkout code
         uses: actions/checkout@v4
         with:
           path: ${{ env.GOPATH }}/src/github.com/kubeflow/trainer
@@ -39,21 +93,14 @@ jobs:
 
       - name: Install dependencies
         run: |
-          echo "Install Papermill"
           pip install papermill==2.6.0 jupyter==1.1.1 ipykernel==6.29.5
-
-          echo "Install Kubeflow SDK"
-          pip install git+https://github.com/kubeflow/sdk.git@main#subdirectory=python
-
-          # Tmp, check the script
+          pip install git+https://github.com/kubeflow/sdk.git@main
 
       - name: Setup cluster
-        run: |
-          make test-e2e-setup-cluster K8S_VERSION=${{ matrix.kubernetes-version }}
+        run: make test-e2e-setup-gpu-cluster K8S_VERSION=${{ matrix.kubernetes-version }}
 
       - name: Run e2e with Go
-        run: |
-          make test-e2e || (kubectl logs -n kubeflow-system -l app.kubernetes.io/name=trainer && exit 1)
+        run: make test-e2e || (kubectl logs -n kubeflow-system -l app.kubernetes.io/name=trainer && exit 1)
 
       - name: Run e2e test for example Notebooks
         run: |
@@ -62,10 +109,8 @@ jobs:
           make test-e2e-notebook NOTEBOOK_INPUT=./examples/pytorch/question-answering/fine-tune-distilbert.ipynb NOTEBOOK_OUTPUT=./artifacts/notebooks/${{ matrix.kubernetes-version }}_fine-tune-distilbert.ipynb TIMEOUT=900
 
       - name: Delete cluster
-        run: |
-          make test-e2e-delete-cluster K8S_VERSION=${{ matrix.kubernetes-version }}
+        run: make test-e2e-delete-gpu-cluster
 
-      # TODO (andreyvelich): Discuss how we can upload artifacts for multiple Notebooks.
       - name: Upload Artifacts to GitHub
         uses: actions/upload-artifact@v4
         if: always()
