@@ -39,7 +39,8 @@ jobs:
             } catch (error) {
               if (error.status === 404) {
                 console.log(`User ${username} is NOT a member of the ${org} organization.`);
-                if (username === 'jaiakash') {
+                console.log(`User ${username} is authorized (it is jaiakash).`);
+                if (username == 'jaiakash') {
                   console.log(`User ${username} is authorized (it is jaiakash).`);
                   core.setOutput("is_member", "true");
                   return;
