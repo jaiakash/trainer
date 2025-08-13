@@ -18,59 +18,36 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  membership-check:
+  run-e2e-on-gpu-runner:
+    if: contains(github.event.pull_request.labels.*.name, 'run-e2e-on-gpu-runner') || github.event_name == 'pull_request_target'
     runs-on: ubuntu-latest
-    outputs:
-      is_member: ${{ steps.check.outputs.is_member }}
+    continue-on-error: true
+
     steps:
-      - name: Check if actor is a Kubeflow GitHub member
-        id: check
+      - name: Check if author is a Kubeflow GitHub member
+        id: membership-check
         uses: actions/github-script@v7
         with:
           script: |
-            const actor = github.event_name === 'issue_comment'
-              ? context.payload.comment.user.login
-              : context.payload.pull_request.user.login;
+            const username = context.payload.pull_request.user.login;
             const org = context.repo.owner;
             try {
-              await github.rest.orgs.checkMembershipForUser({ org, username: actor });
+              await github.rest.orgs.checkMembershipForUser({ org, username });
+              console.log(`User ${username} is a member of the ${org} organization.`);
               core.setOutput("is_member", "true");
             } catch (error) {
               if (error.status === 404) {
+                console.log(`User ${username} is NOT a member of the ${org} organization.`);
                 core.setOutput("is_member", "false");
               } else {
                 throw error;
               }
             }
 
-  trigger-gpu-self-runner:
-    needs: membership-check
-    if: |
-      github.event_name == 'issue_comment' &&
-      github.event.issue.pull_request != null &&
-      needs.membership-check.outputs.is_member == 'true' &&
-      contains(github.event.comment.body, '/run-e2e-on-gpu-runner')
+  gpu-job:
+    needs: run-e2e-on-gpu-runner
     runs-on: self-hosted
+    if: needs.run-e2e-on-gpu-runner.outputs.is_member == 'true' || contains(github.event.pull_request.labels.*.name, 'run-e2e-on-gpu-runner')
     steps:
       - uses: actions/checkout@v4
-      - run: echo "✅ Running on OKE self-hosted runner triggered by a Kubeflow member."
-
-  deny-non-member:
-    needs: membership-check
-    if: |
-      github.event_name == 'issue_comment' &&
-      github.event.issue.pull_request != null &&
-      needs.membership-check.outputs.is_member == 'false' &&
-      contains(github.event.comment.body, '/run-e2e-on-gpu-runner')
-    runs-on: ubuntu-latest
-    steps:
-      - name: Comment denial message
-        uses: actions/github-script@v7
-        with:
-          script: |
-            await github.rest.issues.createComment({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              issue_number: context.issue.number,
-              body: `🚫 @${context.payload.comment.user.login}, you are not a member of the Kubeflow organization. GPU E2E tests will not be triggered.`
-            });
+      - run: echo "✅ Running on OKE self-hosted GPU runner."
