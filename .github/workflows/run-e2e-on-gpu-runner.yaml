@@ -1,66 +1,13 @@
-name: Approve to run E2E Tests on GPU Runner
-
-permissions:
-  actions: write
-  contents: read
-  issues: write
-  pull-requests: write
+name: Run GPU Job if Label Present
 
 on:
   pull_request_target:
     types:
       - labeled
       - synchronize
-  issue_comment:
-    types:
-      - created
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}-${{ github.event.number }}
-  cancel-in-progress: true
 
 jobs:
-  check-approval-for-gpu-runner:
-    if: github.event_name == 'issue_comment'
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Check if comment author is a Kubeflow GitHub member or username is jaiakash
-        id: membership-check
-        uses: actions/github-script@v7
-        with:
-          script: |
-            const username = context.payload.comment.user.login;
-            const org = context.repo.owner;
-            try {
-              await github.rest.orgs.checkMembershipForUser({ org, username });
-              console.log(`User ${username} is a member of the ${org} organization.`);
-              core.setOutput("is_member", "true");
-            } catch (error) {
-              if (error.status === 404) {
-                console.log(`User ${username} is NOT a member of the ${org} organization.`);
-                console.log(`User ${username} is authorized (it is jaiakash).`);
-                if (username == 'jaiakash') {
-                  console.log(`User ${username} is authorized (it is jaiakash).`);
-                  core.setOutput("is_member", "true");
-                  return;
-                }
-                core.setOutput("is_member", "false");
-              } else {
-                throw error;
-              }
-            }
-
-
-      - name: Add label to PR
-        if: steps.membership-check.outputs.is_member == 'true'
-        uses: actions-ecosystem/action-add-labels@v1
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          labels: run-e2e-on-gpu-runner
-
   gpu-job:
-    needs: check-approval-for-gpu-runner
     if: contains(github.event.pull_request.labels.*.name, 'run-e2e-on-gpu-runner')
     runs-on: self-hosted
     steps:
