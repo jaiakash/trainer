@@ -52,5 +52,13 @@ jobs:
               owner: context.repo.owner,
               repo: context.repo.repo,
               issue_number: context.issue.number,
-              body: "Hey @jaiakash, please add ok-to-test-gpu-runner label."
+              body: "Hey @jaiakash, please add `ok-to-test-gpu-runner`."
             })
+
+  gpu-job:
+    needs: detect-changes
+    if: contains(github.event.pull_request.labels.*.name, 'ok-to-test-gpu-runner')
+    runs-on: self-hosted
+    steps:
+      - uses: actions/checkout@v4
+      - run: echo "✅ Running on OKE self-hosted GPU runner."
