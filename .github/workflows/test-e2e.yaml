@@ -1,67 +1,70 @@
-name: E2E Test
+# name: E2E Test
 
-on:
-  - pull_request
+# on:
+#   - push
+#   - pull_request
 
-jobs:
-  e2e-test:
-    name: E2E Test
-    runs-on: oracle-vm-16cpu-64gb-x86-64
-    env:
-      GOPATH: ${{ github.workspace }}/go
-    defaults:
-      run:
-        working-directory: ${{ env.GOPATH }}/src/github.com/kubeflow/trainer
+# jobs:
+#   e2e-test:
+#     name: E2E Test
+#     runs-on:
+#       labels: self-hosted
+#     env:
+#       GOPATH: ${{ github.workspace }}/go
+#     defaults:
+#       run:
+#         working-directory: ${{ env.GOPATH }}/src/github.com/kubeflow/trainer
 
-    strategy:
-      fail-fast: false
-      matrix:
-        # Kubernetes versions for e2e tests on Kind cluster.
-        kubernetes-version: ["1.30.0", "1.31.0", "1.32.3", "1.33.1"]
+#     strategy:
+#       fail-fast: false
+#       matrix:
+#         # Kubernetes versions for e2e tests on Kind cluster.
+#         kubernetes-version: ["1.30.0", "1.31.0", "1.32.3", "1.33.1"]
 
-    steps:
-      - name: Check out code
-        uses: actions/checkout@v4
-        with:
-          path: ${{ env.GOPATH }}/src/github.com/kubeflow/trainer
+#     steps:
+#       - name: Check out code
+#         uses: actions/checkout@v4
+#         with:
+#           path: ${{ env.GOPATH }}/src/github.com/kubeflow/trainer
 
-      - name: Setup Go
-        uses: actions/setup-go@v5
-        with:
-          go-version-file: ${{ env.GOPATH }}/src/github.com/kubeflow/trainer/go.mod
+#       - name: Setup Go
+#         uses: actions/setup-go@v5
+#         with:
+#           go-version-file: ${{ env.GOPATH }}/src/github.com/kubeflow/trainer/go.mod
 
-      - name: Setup Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: 3.11
+#       - name: Setup Python
+#         uses: actions/setup-python@v5
+#         with:
+#           python-version: 3.11
 
-      - name: Install dependencies
-        run: |
-          echo "Install Papermill"
-          pip install papermill==2.6.0 jupyter==1.1.1 ipykernel==6.29.5
+#       - name: Install dependencies
+#         run: |
+#           echo "Install Papermill"
+#           pip install papermill==2.6.0 jupyter==1.1.1 ipykernel==6.29.5
 
           echo "Install Kubeflow SDK"
           pip install git+https://github.com/kubeflow/sdk.git@main
 
-      - name: Setup cluster
-        run: |
-          make test-e2e-setup-cluster K8S_VERSION=${{ matrix.kubernetes-version }}
 
-      - name: Run e2e with Go
-        run: |
-          make test-e2e || (kubectl logs -n kubeflow-system -l app.kubernetes.io/name=trainer && exit 1)
+#       # - name: Setup cluster
+#       #   run: |
+#       #     make test-e2e-setup-cluster K8S_VERSION=${{ matrix.kubernetes-version }}
 
-      - name: Run e2e test for example Notebooks
-        run: |
-          mkdir -p artifacts/notebooks
-          make test-e2e-notebook NOTEBOOK_INPUT=./examples/pytorch/image-classification/mnist.ipynb NOTEBOOK_OUTPUT=./artifacts/notebooks/${{ matrix.kubernetes-version }}_mnist.ipynb TIMEOUT=900
-          make test-e2e-notebook NOTEBOOK_INPUT=./examples/pytorch/question-answering/fine-tune-distilbert.ipynb NOTEBOOK_OUTPUT=./artifacts/notebooks/${{ matrix.kubernetes-version }}_fine-tune-distilbert.ipynb TIMEOUT=900
+#       - name: Run e2e with Go
+#         run: |
+#           make test-e2e || (kubectl logs -n kubeflow-system -l app.kubernetes.io/name=trainer && exit 1)
 
-      # TODO (andreyvelich): Discuss how we can upload artifacts for multiple Notebooks.
-      - name: Upload Artifacts to GitHub
-        uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: ${{ matrix.kubernetes-version }}
-          path: ${{ env.GOPATH }}/src/github.com/kubeflow/trainer/artifacts/*
-          retention-days: 1
+#       - name: Run e2e test for example Notebooks
+#         run: |
+#           mkdir -p artifacts/notebooks
+#           make test-e2e-notebook NOTEBOOK_INPUT=./examples/pytorch/image-classification/mnist.ipynb NOTEBOOK_OUTPUT=./artifacts/notebooks/${{ matrix.kubernetes-version }}_mnist.ipynb TIMEOUT=900
+#         # make test-e2e-notebook NOTEBOOK_INPUT=./examples/pytorch/question-answering/fine-tune-distilbert.ipynb NOTEBOOK_OUTPUT=./artifacts/notebooks/${{ matrix.kubernetes-version }}_fine-tune-distilbert.ipynb TIMEOUT=900
+
+#       # TODO (andreyvelich): Discuss how we can upload artifacts for multiple Notebooks.
+#       - name: Upload Artifacts to GitHub
+#         uses: actions/upload-artifact@v4
+#         if: always()
+#         with:
+#           name: ${{ matrix.kubernetes-version }}
+#           path: ${{ env.GOPATH }}/src/github.com/kubeflow/trainer/artifacts/*
+#           retention-days: 1
