@@ -1,15 +1,14 @@
 name: GPU E2E Test
 
 on:
-  pull_request_target:
-    types:
-      - labeled
+  push:
+    branches:
+      - '**'
 
 jobs:
   e2e-test:
-    if: contains(github.event.pull_request.labels.*.name, 'ok-to-test-gpu-runner')
-    name: E2E Test
-    runs-on: oracle-vm-16cpu-a10gpu-240gb
+    name: GPU E2E Test
+    runs-on: arc-test-akash
 
     env:
       GOPATH: ${{ github.workspace }}/go
