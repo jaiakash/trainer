@@ -1,6 +1,5 @@
 name: GPU E2E Test
 
-# Trigger on PR creation, updates, or labeling
 on:
   pull_request:
     types: [opened, reopened, synchronize, labeled]
@@ -13,7 +12,7 @@ jobs:
       contains(join(github.event.pull_request.labels.*.name, ','), 'ok-to-test-gpu-runner') ||
       (github.event_name == 'pull_request_target' && github.event.label && github.event.label.name == 'ok-to-test-gpu-runner')
     name: GPU E2E Test
-    runs-on: oracle-vm-16cpu-a10gpu-240gb
+    runs-on: akash-gpu-vm
 
     env:
       GOPATH: ${{ github.workspace }}/go
