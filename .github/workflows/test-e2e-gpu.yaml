@@ -46,6 +46,14 @@ jobs:
           echo "Install Kubeflow SDK"
           pip install git+https://github.com/kubeflow/sdk.git@main
 
+      - name: Install Software
+        run: |
+          echo "Install make"
+          sudo yum install make
+
+          echo "Install docker"
+          sudo dnf install docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+
       - name: Setup cluster
         run: |
           make test-e2e-setup-gpu-cluster K8S_VERSION=${{ matrix.kubernetes-version }}
