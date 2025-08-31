@@ -21,6 +21,9 @@ set -o nounset
 set -o pipefail
 set -x
 
+alias kind='sudo kind'
+alias nvkind='sudo nvkind' 
+
 # Find all clusters with prefix "nvkind"
 CLUSTERS=$(kind get clusters | grep '^nvkind' || true)
 

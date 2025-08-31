@@ -19,6 +19,7 @@
 set -o errexit
 set -o nounset
 set -o pipefail
+shopt -s expand_aliases
 set -x
 
 # Configure variables.
@@ -28,6 +29,12 @@ GPU_OPERATOR_VERSION="v25.3.2"
 KIND_NODE_VERSION=kindest/node:v${K8S_VERSION}
 NAMESPACE="kubeflow-system"
 TIMEOUT="5m"
+
+alias kind='sudo kind'
+alias nvkind='sudo nvkind' 
+alias kubectl='sudo kubectl'
+alias helm='sudo helm'
+alias docker='sudo docker'
 
 # Kubeflow Trainer images.
 # TODO (andreyvelich): Support initializers images.
