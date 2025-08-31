@@ -36,6 +36,12 @@ if [ -z "${PAPERMILL_TIMEOUT}" ]; then
     exit 1
 fi
 
+alias kind='sudo kind'
+alias nvkind='sudo nvkind' 
+alias kubectl='sudo kubectl'
+alias helm='sudo helm'
+alias docker='sudo docker'
+
 print_results() {
     kubectl get pods
     kubectl describe pod
