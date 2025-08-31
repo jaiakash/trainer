@@ -22,10 +22,11 @@ set -o pipefail
 set -x
 
 alias kind='sudo kind'
-alias nvkind='sudo nvkind' 
+alias nvkind='sudo nvkind'
+alias docker='sudo docker'
 
 # Find all clusters with prefix "nvkind"
-CLUSTERS=$(kind get clusters | grep '^nvkind' || true)
+CLUSTERS=$(sudo kind get clusters | grep '^nvkind' || true)
 
 if [[ -z "${CLUSTERS}" ]]; then
   echo "No nvkind clusters found. Nothing to delete."
@@ -34,7 +35,7 @@ fi
 
 for CLUSTER_NAME in ${CLUSTERS}; do
   echo "Deleting Kind cluster: ${CLUSTER_NAME}"
-  if kind delete cluster --name "${CLUSTER_NAME}"; then
+  if sudo kind delete cluster --name "${CLUSTER_NAME}"; then
     echo "Successfully deleted ${CLUSTER_NAME}"
   else
     echo "Warning: Failed to delete ${CLUSTER_NAME}, continuing..."
