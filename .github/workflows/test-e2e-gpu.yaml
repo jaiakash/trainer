@@ -31,16 +31,13 @@ jobs:
         id: check-label
         run: |
           if [[ "${{ join(github.event.pull_request.labels.*.name, ',') }}" != *"ok-to-test-gpu-runner"* ]]; then
-            echo "Label 'ok-to-test-gpu-runner' not found. Skipping GPU tests."
+            echo "✅ Skipping GPU E2E tests (label not present)."
             echo "skip=true" >> $GITHUB_OUTPUT
+            exit 0
           else
             echo "Label found. Running GPU tests."
             echo "skip=false" >> $GITHUB_OUTPUT
           fi
-
-      - name: Skip message
-        if: steps.check-label.outputs.skip == 'true'
-        run: echo "✅ Skipped GPU E2E tests (label not present)."
 
       - name: Setup Go
         if: steps.check-label.outputs.skip == 'false'
