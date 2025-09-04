@@ -6,7 +6,7 @@ on:
 
 jobs:
   gpu-e2e-test:
-    name: GPU E2E Test Test
+    name: GPU E2E Test
     runs-on: self-hosted
 
     env:
