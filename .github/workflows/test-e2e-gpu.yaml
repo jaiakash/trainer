@@ -9,11 +9,26 @@ permissions:
   pull-requests: read
 
 jobs:
+  check-label:
+    name: Check GPU Label
+    runs-on: ubuntu-latest
+    outputs:
+      gpu: ${{ steps.check.outputs.gpu }}
+    steps:
+      - id: check
+        run: |
+          LABELS="${{ join(github.event.pull_request.labels.*.name, ',') }}"
+          if [[ "$LABELS" == *"ok-to-test-gpu-runner"* ]]; then
+            echo "gpu=true" >> $GITHUB_OUTPUT
+          else
+            echo "gpu=false" >> $GITHUB_OUTPUT
+
   gpu-e2e-test:
     name: GPU E2E Test
+    needs: check-label
+    if: needs.check-label.outputs.gpu == 'true'      # Only runs if label exists
     runs-on: oracle-vm-16cpu-a10gpu-240gb
-    environment: ${{ github.event.pull_request.labels.*.name contains 'ok-to-test-gpu-runner' && 'gpu-tests' || '' }}
-    if: contains(join(github.event.pull_request.labels.*.name, ','), 'ok-to-test-gpu-runner')
+    environment: gpu-tests                             # Approval requested only when job runs
     env:
       GOPATH: ${{ github.workspace }}/go
     defaults:
@@ -24,44 +39,34 @@ jobs:
       matrix:
         kubernetes-version: ["1.33.1"]
     steps:
-      - name: Check out code
+      - name: Checkout code
         uses: actions/checkout@v4
-        with:
-          ref: ${{ github.event.pull_request.head.sha }}
-          path: ${{ env.GOPATH }}/src/github.com/kubeflow/trainer
-
       - name: Setup Go
         uses: actions/setup-go@v5
         with:
-          go-version-file: ${{ env.GOPATH }}/src/github.com/kubeflow/trainer/go.mod
-
+          go-version-file: ./go.mod
       - name: Setup Python
         uses: actions/setup-python@v5
         with:
           python-version: 3.11
-
       - name: Install dependencies
         run: |
           pip install papermill==2.6.0 jupyter==1.1.1 ipykernel==6.29.5
           pip install git+https://github.com/kubeflow/sdk.git@main
-
-      - name: Setup cluster with GPU support using nvidia/kind
-        run: |
-          make test-e2e-setup-gpu-cluster K8S_VERSION=${{ matrix.kubernetes-version }}
-
+      - name: Setup GPU cluster
+        run: make test-e2e-setup-gpu-cluster K8S_VERSION=${{ matrix.kubernetes-version }}
       - name: Run e2e test on GPU cluster
         run: |
           mkdir -p artifacts/notebooks
           make test-e2e-notebook NOTEBOOK_INPUT=./examples/torchtune/llama3_2/alpaca-trainjob-yaml.ipynb NOTEBOOK_OUTPUT=./artifacts/notebooks/${{ matrix.kubernetes-version }}_alpaca-trainjob-yaml.ipynb TIMEOUT=900
         env:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
-
-      - name: Upload Artifacts to GitHub
+      - name: Upload Artifacts
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: ${{ matrix.kubernetes-version }}
-          path: ${{ env.GOPATH }}/src/github.com/kubeflow/trainer/artifacts/*
+          path: ./artifacts/*
           retention-days: 1
 
   delete-kind-cluster:
