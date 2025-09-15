@@ -27,7 +27,7 @@ jobs:
 
   gpu-e2e-test:
     name: GPU E2E Test
-    runs-on: arc-akash
+    runs-on: oracle-vm-16cpu-a10gpu-240gb
     needs: check-label
     if: needs.check-label.outputs.skip == 'false'   # only run if label present
     environment: gpu-tests
