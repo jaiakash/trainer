@@ -43,7 +43,7 @@ jobs:
           pip install git+https://github.com/kubeflow/sdk.git@main
 
       - name: Install tools
-        run: hack/install-tools.sh
+        run: bash hack/install-tools.sh
 
       - name: Setup cluster with GPU support using nvidia/kind
         run: |
