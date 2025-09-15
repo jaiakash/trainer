@@ -13,21 +13,23 @@ jobs:
     name: Check GPU Label
     runs-on: ubuntu-latest
     outputs:
-      run_gpu: ${{ steps.set-output.outputs.run_gpu }}
+      skip: ${{ steps.check-label.outputs.skip }}
     steps:
-      - id: set-output
+      - id: check-label
         run: |
-          LABELS="${{ join(github.event.pull_request.labels.*.name, ' ') }}"
-          if [[ "$LABELS" == *"ok-to-test-gpu-runner"* ]]; then
-            echo "run_gpu=true" >> $GITHUB_OUTPUT
+          if [[ "${{ join(github.event.pull_request.labels.*.name, ',') }}" != *"ok-to-test-gpu-runner"* ]]; then
+            echo "✅ Skipping GPU E2E tests (label not present)."
+            echo "skip=true" >> $GITHUB_OUTPUT
           else
-            echo "run_gpu=false" >> $GITHUB_OUTPUT
+            echo "Label found. Requesting environment approval to run GPU tests."
+            echo "skip=false" >> $GITHUB_OUTPUT
+          fi
 
-  gpu-e2e:
+  gpu-e2e-test:
     name: GPU E2E Test
-    needs: check-label
-    if: needs.check-label.outputs.run_gpu == 'true'
     runs-on: oracle-vm-16cpu-a10gpu-240gb
+    needs: check-label
+    if: needs.check-label.outputs.skip == 'false'
     environment: gpu-tests
     env:
       GOPATH: ${{ github.workspace }}/go
@@ -60,8 +62,9 @@ jobs:
           pip install papermill==2.6.0 jupyter==1.1.1 ipykernel==6.29.5
           pip install git+https://github.com/kubeflow/sdk.git@main
 
-      - name: Setup cluster with GPU support
-        run: make test-e2e-setup-gpu-cluster K8S_VERSION=${{ matrix.kubernetes-version }}
+      - name: Setup cluster with GPU support using nvidia/kind
+        run: |
+          make test-e2e-setup-gpu-cluster K8S_VERSION=${{ matrix.kubernetes-version }}
 
       - name: Run e2e test on GPU cluster
         run: |
@@ -70,7 +73,8 @@ jobs:
         env:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
 
-      - name: Upload Artifacts
+      - name: Upload Artifacts to GitHub
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: ${{ matrix.kubernetes-version }}
