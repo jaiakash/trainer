@@ -9,28 +9,11 @@ permissions:
   pull-requests: read
 
 jobs:
-  check-label:
-    name: Check GPU Label
-    runs-on: ubuntu-latest
-    outputs:
-      skip: ${{ steps.check-label.outputs.skip }}
-    steps:
-      - id: check-label
-        run: |
-          if [[ "${{ join(github.event.pull_request.labels.*.name, ',') }}" != *"ok-to-test-gpu-runner"* ]]; then
-            echo "✅ Skipping GPU E2E tests (label not present)."
-            echo "skip=true" >> $GITHUB_OUTPUT
-          else
-            echo "Label found. Requesting environment approval to run GPU tests."
-            echo "skip=false" >> $GITHUB_OUTPUT
-          fi
-
   gpu-e2e-test:
     name: GPU E2E Test
     runs-on: oracle-vm-16cpu-a10gpu-240gb
-    needs: check-label
-    if: needs.check-label.outputs.skip == 'false'
-    environment: gpu-tests
+    environment: ${{ github.event.pull_request.labels.*.name contains 'ok-to-test-gpu-runner' && 'gpu-tests' || '' }}
+    if: contains(join(github.event.pull_request.labels.*.name, ','), 'ok-to-test-gpu-runner')
     env:
       GOPATH: ${{ github.workspace }}/go
     defaults:
