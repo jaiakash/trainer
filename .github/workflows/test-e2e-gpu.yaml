@@ -22,6 +22,7 @@ jobs:
             echo "gpu=true" >> $GITHUB_OUTPUT
           else
             echo "gpu=false" >> $GITHUB_OUTPUT
+          fi
 
   gpu-e2e-test:
     name: GPU E2E Test
