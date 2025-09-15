@@ -1,20 +1,12 @@
 name: GPU E2E Test
 
 on:
-  pull_request:
-    types: [opened, reopened, synchronize, labeled]
-
-permissions:
-  contents: read
-  pull-requests: read
+  push:
 
 jobs:
   gpu-e2e-test:
     name: GPU E2E Test
-    runs-on: oracle-vm-16cpu-a10gpu-240gb
-
-    # Maintainers have to approve the use of secrets
-    environment: gpu-tests
+    runs-on: arc-akash
 
     env:
       GOPATH: ${{ github.workspace }}/go
@@ -29,18 +21,6 @@ jobs:
         kubernetes-version: ["1.33.1"]
 
     steps:
-      - name: Check GPU label
-        id: check-label
-        run: |
-          if [[ "${{ join(github.event.pull_request.labels.*.name, ',') }}" != *"ok-to-test-gpu-runner"* ]]; then
-            echo "✅ Skipping GPU E2E tests (label not present)."
-            echo "skip=true" >> $GITHUB_OUTPUT
-            exit 0
-          else
-            echo "Label found. Requesting environment approval to run GPU tests."
-            echo "skip=false" >> $GITHUB_OUTPUT
-          fi
-
       - name: Check out code
         if: steps.check-label.outputs.skip == 'false'
         uses: actions/checkout@v4
@@ -89,7 +69,7 @@ jobs:
 
   delete-kind-cluster:
     name: Delete kind Cluster
-    runs-on: oracle-vm-16cpu-a10gpu-240gb
+    runs-on: arc-akash
     needs: [gpu-e2e-test]
     if: always()
     steps:
