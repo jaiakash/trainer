@@ -69,7 +69,7 @@ sudo apt-get install -y \
     libnvidia-container1=${NVIDIA_CONTAINER_TOOLKIT_VERSION}
 
 sudo nvidia-ctk runtime configure --runtime=docker
-sudo systemctl restart docker
+# sudo systemctl restart docker
 
 # -------------------------------
 # Install Helm
