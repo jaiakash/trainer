@@ -15,13 +15,13 @@ sudo apt-get install -y build-essential make git curl wget apt-transport-https c
 # -------------------------------
 # Install Go
 # -------------------------------
-GO_VERSION="1.24.0"
-wget https://go.dev/dl/go${GO_VERSION}.linux-amd64.tar.gz
-sudo rm -rf /usr/local/go
-sudo tar -C /usr/local -xzf go${GO_VERSION}.linux-amd64.tar.gz
-echo "export PATH=\$PATH:/usr/local/go/bin:\$HOME/go/bin" | sudo tee /etc/profile.d/go.sh
-source /etc/profile.d/go.sh
-rm go${GO_VERSION}.linux-amd64.tar.gz
+# GO_VERSION="1.24.0"
+# wget https://go.dev/dl/go${GO_VERSION}.linux-amd64.tar.gz
+# sudo rm -rf /usr/local/go
+# sudo tar -C /usr/local -xzf go${GO_VERSION}.linux-amd64.tar.gz
+# echo "export PATH=\$PATH:/usr/local/go/bin:\$HOME/go/bin" | sudo tee /etc/profile.d/go.sh
+# source /etc/profile.d/go.sh
+# rm go${GO_VERSION}.linux-amd64.tar.gz
 
 # -------------------------------
 # Install Docker
@@ -42,14 +42,14 @@ sudo apt-get install -y docker-ce docker-ce-cli containerd.io docker-buildx-plug
 # Install Kind and nvkind
 # -------------------------------
 
-# For AMD64 / x86_64
-[ $(uname -m) = x86_64 ] && curl -Lo ./kind https://kind.sigs.k8s.io/dl/v0.30.0/kind-linux-amd64
-chmod +x ./kind
-sudo mv ./kind /usr/local/bin/kind
+# # For AMD64 / x86_64
+# [ $(uname -m) = x86_64 ] && curl -Lo ./kind https://kind.sigs.k8s.io/dl/v0.30.0/kind-linux-amd64
+# chmod +x ./kind
+# sudo mv ./kind /usr/local/bin/kind
 
-echo "Install nvkind"
-sudo go install github.com/NVIDIA/nvkind/cmd/nvkind@latest
-sudo cp /root/go/bin/nvkind /usr/local/bin/
+# echo "Install nvkind"
+# sudo go install github.com/NVIDIA/nvkind/cmd/nvkind@latest
+# sudo cp /root/go/bin/nvkind /usr/local/bin/
 
 # -------------------------------
 # Install NVIDIA Container Toolkit
@@ -69,16 +69,12 @@ sudo apt-get install -y \
     libnvidia-container1=${NVIDIA_CONTAINER_TOOLKIT_VERSION}
 
 sudo nvidia-ctk runtime configure --runtime=docker
-# sudo systemctl restart docker
-
-# Above fails with Github ARC
-# So running this instead
-sudo pkill -SIGHUP dockerd || true
+sudo systemctl restart docker
 
 # -------------------------------
 # Install Helm
 # -------------------------------
-curl https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash
+# curl https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash
 
 # -------------------------------
 # Install kubectl (latest stable)
@@ -102,10 +98,10 @@ alias nvkind="sudo nvkind"
 
 # Verify installs
 echo "✅ Installed versions:"
-go version
+# go version
 sudo docker --version
 nvidia-ctk --version
-helm version
+# helm version
 kubectl version --client=true --output=yaml
 
 echo "🎉 Setup complete!"
