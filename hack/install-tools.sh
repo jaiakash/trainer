@@ -39,7 +39,5 @@ alias docker="sudo docker"
 # Verify installs
 echo "✅ Installed versions:"
 sudo docker --version
-nvidia-ctk --version
-kubectl version --client=true --output=yaml
 
 echo "🎉 Setup complete!"
