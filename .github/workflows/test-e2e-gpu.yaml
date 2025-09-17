@@ -6,7 +6,7 @@ on:
 jobs:
   gpu-e2e-test:
     name: GPU E2E Test
-    runs-on: arc-akash
+    runs-on: arc-runner-set
 
     env:
       GOPATH: ${{ github.workspace }}/go
@@ -26,19 +26,27 @@ jobs:
         with:
           ref: ${{ github.event.pull_request.head.sha }}
           path: ${{ env.GOPATH }}/src/github.com/kubeflow/trainer
-
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: ${{ env.GOPATH }}/src/github.com/kubeflow/trainer/go.mod
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: 3.11
+      - name: Install dependencies
+        run: |
+          pip install papermill==2.6.0 jupyter==1.1.1 ipykernel==6.29.5
+          pip install git+https://github.com/kubeflow/sdk.git@main
       - name: Install tools
         run: bash hack/install-tools.sh
-
-      - name: Setup cluster with GPU support using nvidia/kind
+      - name: Setup cluster with GPU support
         run: |
           make test-e2e-setup-gpu-cluster K8S_VERSION=${{ matrix.kubernetes-version }}
-
       - name: Run e2e test on GPU cluster
         run: |
           mkdir -p artifacts/notebooks
           make test-e2e-notebook NOTEBOOK_INPUT=./examples/torchtune/qwen2_5/qwen2.5-1.5B-with-alpaca.ipynb NOTEBOOK_OUTPUT=./artifacts/notebooks/${{ matrix.kubernetes-version }}_qwen2_5_with_alpaca-trainjob-yaml.ipynb TIMEOUT=900
-
       - name: Upload Artifacts to GitHub
         if: always()
         uses: actions/upload-artifact@v4
@@ -46,7 +54,6 @@ jobs:
           name: ${{ matrix.kubernetes-version }}
           path: ${{ env.GOPATH }}/src/github.com/kubeflow/trainer/artifacts/*
           retention-days: 1
-
   delete-kind-cluster:
     name: Delete kind Cluster
     runs-on: arc-akash
