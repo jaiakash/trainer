@@ -4,13 +4,10 @@
 #!/bin/bash
 set -eux
 
-sudo apt-get update -y
-sudo apt-get upgrade -y
-
 # -------------------------------
 # Install build tools & make
 # -------------------------------
-sudo apt-get install -y build-essential make git curl wget apt-transport-https ca-certificates gnupg lsb-release
+# sudo apt-get install -y build-essential make git curl wget apt-transport-https ca-certificates gnupg lsb-release
 
 # -------------------------------
 # Install NVIDIA Container Toolkit
@@ -39,6 +36,8 @@ alias docker="sudo docker"
 # Verify installs
 echo "✅ Installed versions:"
 sudo docker --version
+
+sudo systemctl start docker
 
 echo "🎉 Setup complete!"
 
