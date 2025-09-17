@@ -71,6 +71,10 @@ sudo apt-get install -y \
 sudo nvidia-ctk runtime configure --runtime=docker
 # sudo systemctl restart docker
 
+# Above fails with Github ARC
+# So running this instead
+sudo pkill -SIGHUP dockerd || true
+
 # -------------------------------
 # Install Helm
 # -------------------------------
@@ -105,3 +109,13 @@ helm version
 kubectl version --client=true --output=yaml
 
 echo "🎉 Setup complete!"
+
+# -------------------------------
+# Test: Verify Docker GPU Access
+# -------------------------------
+echo "🔎 Testing Docker GPU access..."
+sudo docker run --rm --gpus all nvidia/cuda:12.2.0-base-ubuntu22.04 nvidia-smi || {
+  echo "❌ Docker GPU access failed!"
+  exit 1
+}
+echo "✅ Docker GPU access verified!"
