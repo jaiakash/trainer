@@ -30,6 +30,11 @@ GPU_CLUSTER_NAME="kind-gpu"
 NAMESPACE="kubeflow-system"
 TIMEOUT="5m"
 
+sudo go install github.com/NVIDIA/nvkind/cmd/nvkind@latest
+sudo cp /root/go/bin/nvkind /usr/local/bin/
+
+curl https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash
+
 # Kubeflow Trainer images.
 # TODO (andreyvelich): Support initializers images.
 CONTROLLER_MANAGER_CI_IMAGE_NAME="ghcr.io/kubeflow/trainer/trainer-controller-manager"
