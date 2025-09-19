@@ -3,3 +3,4 @@ kind: Kustomization
 resources:
   - llama3_2/llama3_2_1B.yaml
   - llama3_2/llama3_2_3B.yaml
+  - phi3/phi3_mini.yaml
