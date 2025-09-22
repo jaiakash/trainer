@@ -1,0 +1,14 @@
+name: GPU Runner Test
+
+on:
+  push:
+
+jobs:
+  build:
+    name: Test GPU Runner
+    runs-on: my-oracle-vm-gpu-a10-1
+    steps:
+    - name: Check for GPU
+      run: |
+        echo "Checking for NVIDIA GPU..."
+        nvidia-smi
