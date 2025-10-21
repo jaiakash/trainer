@@ -6,7 +6,7 @@ on:
 jobs:
   build:
     name: Test GPU Runner
-    runs-on: my-oracle-vm-gpu-a10-1
+    runs-on: kubeflow-oracle-vm-gpu-a10-1
     steps:
     - name: Check for GPU
       run: |
