@@ -1,5 +1,118 @@
 # Changelog
 
+# [v2.2.0](https://github.com/kubeflow/trainer/tree/v2.2.0) (2026-02-20)
+
+This is Kubeflow Trainer v2.2.0 release.
+
+```bash
+kubectl apply --server-side -k "https://github.com/kubeflow/trainer.git/manifests/overlays/manager?ref=v2.2.0"
+kubectl apply --server-side -k "https://github.com/kubeflow/trainer.git/manifests/overlays/runtimes?ref=v2.2.0"
+```
+
+You can now install controller manager with Helm charts 🚀
+
+```bash
+helm install kubeflow-trainer oci://ghcr.io/kubeflow/charts/kubeflow-trainer --version 2.2.0
+```
+
+For more information, please see [the Kubeflow Trainer docs](https://www.kubeflow.org/docs/components/trainer/overview/)
+### 🚀 Features
+
+- feat: git cliff
+- feat: Code Quality Checks workflow ([#3224](https://github.com/kubeflow/trainer/pull/3224) by @Goku2099)
+- feat: Add the manager field to the podTemplateOverride object ([#3020](https://github.com/kubeflow/trainer/pull/3020) by @kaisoz)
+- feat(runtimes): add support for ClusterTrainingRuntimes in Helm chart ([#3124](https://github.com/kubeflow/trainer/pull/3124) by @khushiiagrawal)
+- feat(docs): KEP-2598 XGBoost Runtime for Trainer V2 ([#3118](https://github.com/kubeflow/trainer/pull/3118) by @Krishna-kg732)
+- feat: add production-ready MNIST example for PyTorch ([#3063](https://github.com/kubeflow/trainer/pull/3063) by @Snehadas2005)
+- feat(examples): add torch.compile to PyTorch local examples ([#3076](https://github.com/kubeflow/trainer/pull/3076) by @Ishtiyaque-Alam)
+- feat(api): Fix immutability of the TrainJob APIs ([#3157](https://github.com/kubeflow/trainer/pull/3157) by @andreyvelich)
+- feat(runtimes): Use JobSet VolumeClaimPolicies APIs for LLM Runtimes ([#3150](https://github.com/kubeflow/trainer/pull/3150) by @andreyvelich)
+- feat: replaced vm runner with test gpu arc from cncf ([#3067](https://github.com/kubeflow/trainer/pull/3067) by @jaiakash)
+- feat(runtimes): Add JAX training runtime ([#3151](https://github.com/kubeflow/trainer/pull/3151) by @kaisoz)
+- feat(docs): Add AGENTS.md and Copilot instructions ([#3121](https://github.com/kubeflow/trainer/pull/3121) by @andreyvelich)
+- feat: add scaffolding for feature gates ([#3102](https://github.com/kubeflow/trainer/pull/3102) by @robert-bell)
+- feat(cache): add Helm chart configuration for data_cache ([#3080](https://github.com/kubeflow/trainer/pull/3080) by @khushiiagrawal)
+- feat(docs): KEP-2779: Track TrainJob progress and expose training metrics ([#2905](https://github.com/kubeflow/trainer/pull/2905) by @robert-bell)
+- feat(api): Add securityContext support to PodTemplateSpecOverride in TrainJob ([#3066](https://github.com/kubeflow/trainer/pull/3066) by @Sanskarzz)
+- feat: add VERSION file ([#3077](https://github.com/kubeflow/trainer/pull/3077) by @milinddethe15)
+- feat: KEP 2841 Flux Policy to support Flux Framework ([#2909](https://github.com/kubeflow/trainer/pull/2909) by @vsoch)
+- feat: only update k8s dependencies via patches ([#2969](https://github.com/kubeflow/trainer/pull/2969) by @kannon92)
+- feat: add dependabot to trainer repo ([#2930](https://github.com/kubeflow/trainer/pull/2930) by @kannon92)
+- feat(docs): Add changelog for Kubeflow Trainer v2.1.0 ([#2921](https://github.com/kubeflow/trainer/pull/2921) by @andreyvelich)
+- feat(cache): KEP-2655: Adding default runtime with cache and example ([#2923](https://github.com/kubeflow/trainer/pull/2923) by @akshaychitneni)
+- feat: Adding local execution example notebook  ([#2907](https://github.com/kubeflow/trainer/pull/2907) by @Fiona-Waters)
+- feat(cache): KEP-2655 - Supporting readiness probes on cache nodes ([#2904](https://github.com/kubeflow/trainer/pull/2904) by @akshaychitneni)
+- feat(docs): Add changelog for Kubeflow Trainer v2.1.0-rc.1 ([#2918](https://github.com/kubeflow/trainer/pull/2918) by @andreyvelich)
+- feat(manifests): Publish Trainer Helm Charts ([#2906](https://github.com/kubeflow/trainer/pull/2906) by @adity1raut)
+- feat(initializer): add s3 model and dataset initializers ([#2728](https://github.com/kubeflow/trainer/pull/2728) by @rudeigerc)
+- feat(docs): Add changelog for Kubeflow Trainer v2.1.0-rc.0 ([#2902](https://github.com/kubeflow/trainer/pull/2902) by @andreyvelich)
+
+### 🐛 Bug Fixes
+
+- fix: align torch-distributed-with-cache runtime logic with unit tests ([#3226](https://github.com/kubeflow/trainer/pull/3226) by @Goku2099)
+- fix(ci): correct duplicate step name in `test-go.yaml` ([#3202](https://github.com/kubeflow/trainer/pull/3202) by @puwun)
+- fix: align torchao with torch 2.9.1 to fix GPU e2e failure ([#3203](https://github.com/kubeflow/trainer/pull/3203) by @Goku2099)
+- fix: Defer kubernetes imports to method level for use with local mode ([#3167](https://github.com/kubeflow/trainer/pull/3167) by @Fiona-Waters)
+- fix: service account test filename ([#3153](https://github.com/kubeflow/trainer/pull/3153) by @aniketpati1121)
+- fix(manifests): Remove jobset and lws patches from kustomize deployment ([#3141](https://github.com/kubeflow/trainer/pull/3141) by @yosri-brh)
+- fix: enable read-only root filesystem for trainer manager ([#3119](https://github.com/kubeflow/trainer/pull/3119) by @Goku2099)
+- fix: fix resourcePerNode override not applied with Volcano scheduler ([#2982](https://github.com/kubeflow/trainer/pull/2982) by @sksingh2005)
+- fix(operator): Prevent JobSet recreation when its TTL has expired ([#3013](https://github.com/kubeflow/trainer/pull/3013) by @astefanutti)
+- fix: add `appVersion` field to Helm chart for Kubeflow Trainer ([#3044](https://github.com/kubeflow/trainer/pull/3044) by @milinddethe15)
+- fix(manifests): fix Prometheus metrics port mismatch ([#3056](https://github.com/kubeflow/trainer/pull/3056) by @ChughShilpa)
+- fix(manifests): Fix RBAC for ClusterTrainingRuntime Access ([#3022](https://github.com/kubeflow/trainer/pull/3022) by @andreyvelich)
+- fix(ci): Fix kube-api-linter install ([#3023](https://github.com/kubeflow/trainer/pull/3023) by @astefanutti)
+- fix(ci): Fix new contributors GH actions workflow lint errors ([#3024](https://github.com/kubeflow/trainer/pull/3024) by @astefanutti)
+- fix(operator): Use Patch to update TrainJob status ([#3009](https://github.com/kubeflow/trainer/pull/3009) by @astefanutti)
+- fix(examples): Fix SSL certificate error for local MNIST example ([#2971](https://github.com/kubeflow/trainer/pull/2971) by @astefanutti)
+- fix(ci): Fix the Kubeflow SDK installation with Docker ([#2926](https://github.com/kubeflow/trainer/pull/2926) by @andreyvelich)
+- fix(manifests): Remove the default tag from the controller image ([#2916](https://github.com/kubeflow/trainer/pull/2916) by @andreyvelich)
+- fix(manifests): Fix Helm charts image name ([#2915](https://github.com/kubeflow/trainer/pull/2915) by @andreyvelich)
+- fix(manifests): Fix boolean values defaulting in Helm charts ([#2913](https://github.com/kubeflow/trainer/pull/2913) by @astefanutti)
+- fix(runtimes): Update pip version in the MLX runtime ([#2908](https://github.com/kubeflow/trainer/pull/2908) by @andreyvelich)
+
+### ⚙️ Miscellaneous Tasks
+
+- chore: migrate to a10.2 gpu for gpu e2e ([#3220](https://github.com/kubeflow/trainer/pull/3220) by @jaiakash)
+- chore: Add comprehensive unit tests for Config API ([#2893](https://github.com/kubeflow/trainer/pull/2893) by @kapil27)
+- chore(docs): added kubecon 2025 trainer talk ([#3187](https://github.com/kubeflow/trainer/pull/3187) by @jaiakash)
+- chore(docs): Create symlink for CLAUDE.md ([#3182](https://github.com/kubeflow/trainer/pull/3182) by @andreyvelich)
+- chore: changed latest to dev in trainer manifests ([#3146](https://github.com/kubeflow/trainer/pull/3146) by @sameerdattav)
+- chore: Nominate @akshaychitneni as Kubeflow Trainer reviewer ([#3149](https://github.com/kubeflow/trainer/pull/3149) by @andreyvelich)
+- chore(docs): Update Trainer README with Data Cache and MPI use-cases ([#3142](https://github.com/kubeflow/trainer/pull/3142) by @andreyvelich)
+- chore: Expose trainer API version via public ConfigMap ([#3083](https://github.com/kubeflow/trainer/pull/3083) by @sameerdattav)
+- chore: use named ports for manager deployment and service ([#3100](https://github.com/kubeflow/trainer/pull/3100) by @Goku2099)
+- chore(docs): Add Trainer v2.1 release news to the README ([#3117](https://github.com/kubeflow/trainer/pull/3117) by @andreyvelich)
+- chore: fix `make helm-lint` ([#3103](https://github.com/kubeflow/trainer/pull/3103) by @robert-bell)
+- chore(runtimes): Bump Torch to 2.9.1 version ([#3093](https://github.com/kubeflow/trainer/pull/3093) by @andreyvelich)
+- chore(cache): Fixing vulnerabilites in data_cache ([#3045](https://github.com/kubeflow/trainer/pull/3045) by @akshaychitneni)
+- chore: Add welcome workflow for new contributors ([#3017](https://github.com/kubeflow/trainer/pull/3017) by @ryanHwH20)
+- chore(operator): Remove Unstructured objects caching ([#3010](https://github.com/kubeflow/trainer/pull/3010) by @astefanutti)
+- chore(examples): Add device to local process MNIST training example ([#3006](https://github.com/kubeflow/trainer/pull/3006) by @astefanutti)
+- chore(examples): Use DDP in local container MNIST training example ([#3007](https://github.com/kubeflow/trainer/pull/3007) by @astefanutti)
+- chore(operator): Use SSA throughout runtime framework ([#2877](https://github.com/kubeflow/trainer/pull/2877) by @astefanutti)
+
+
+### New Contributors
+* @Goku2099 made their first contribution in [#3224](https://github.com/kubeflow/trainer/pull/3224)
+* @puwun made their first contribution in [#3202](https://github.com/kubeflow/trainer/pull/3202)
+* @khushiiagrawal made their first contribution in [#3124](https://github.com/kubeflow/trainer/pull/3124)
+* @Krishna-kg732 made their first contribution in [#3118](https://github.com/kubeflow/trainer/pull/3118)
+* @Snehadas2005 made their first contribution in [#3063](https://github.com/kubeflow/trainer/pull/3063)
+* @Ishtiyaque-Alam made their first contribution in [#3076](https://github.com/kubeflow/trainer/pull/3076)
+* @sameerdattav made their first contribution in [#3146](https://github.com/kubeflow/trainer/pull/3146)
+* @Fiona-Waters made their first contribution in [#3167](https://github.com/kubeflow/trainer/pull/3167)
+* @aniketpati1121 made their first contribution in [#3153](https://github.com/kubeflow/trainer/pull/3153)
+* @yosri-brh made their first contribution in [#3141](https://github.com/kubeflow/trainer/pull/3141)
+* @robert-bell made their first contribution in [#3102](https://github.com/kubeflow/trainer/pull/3102)
+* @sksingh2005 made their first contribution in [#2982](https://github.com/kubeflow/trainer/pull/2982)
+* @Sanskarzz made their first contribution in [#3066](https://github.com/kubeflow/trainer/pull/3066)
+* @ChughShilpa made their first contribution in [#3056](https://github.com/kubeflow/trainer/pull/3056)
+* @vsoch made their first contribution in [#2909](https://github.com/kubeflow/trainer/pull/2909)
+* @ryanHwH20 made their first contribution in [#3017](https://github.com/kubeflow/trainer/pull/3017)
+* @kannon92 made their first contribution in [#2969](https://github.com/kubeflow/trainer/pull/2969)
+* @adity1raut made their first contribution in [#2906](https://github.com/kubeflow/trainer/pull/2906)
+
 # [v2.1.0](https://github.com/kubeflow/trainer/tree/v2.1.0) (2025-11-07)
 
 This is Kubeflow Trainer v2.1.0 release.
