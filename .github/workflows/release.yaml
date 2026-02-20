@@ -21,11 +21,11 @@ jobs:
           fetch-depth: 0
 
       # Activate this when trying for fork repo
-      - name: Add upstream and fetch everything
-        run: |
-          git remote add upstream https://github.com/kubeflow/trainer.git
-          git fetch upstream --tags
-          git fetch origin --tags
+      #- name: Add upstream and fetch everything
+        #run: |
+          #git remote add upstream https://github.com/kubeflow/trainer.git
+          #git fetch upstream --tags
+          #git fetch origin --tags
 
       - name: Prepare release branch
         id: prep
