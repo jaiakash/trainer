@@ -1,13 +1,7 @@
 name: Build and Publish Images
 
 on:
-  push:
-    branches:
-      - master
-      - "release-*"
-    tags:
-      - "v*"
-  pull_request:
+  workflow_dispatch:
 
 permissions:
   contents: read
@@ -19,7 +13,7 @@ concurrency:
 
 jobs:
   build-and-publish:
-    if: github.repository == 'kubeflow/trainer'
+
 
     strategy:
       fail-fast: false
@@ -67,11 +61,11 @@ jobs:
 
         arch:
           - name: x86
-            runs-on: oracle-vm-16cpu-64gb-x86-64
+            runs-on: ubuntu-latest
             platforms_key: x86_platforms
 
           - name: arm64
-            runs-on: oracle-16cpu-64gb-arm64
+            runs-on: ubuntu-24.04-arm
             platforms_key: arm_platforms
 
         exclude:
@@ -94,7 +88,7 @@ jobs:
 
   merge-manifests:
     needs: build-and-publish
-    if: github.repository == 'kubeflow/trainer' && github.event_name == 'push'
+    if: always()
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
