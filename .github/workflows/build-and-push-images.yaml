@@ -34,10 +34,10 @@ jobs:
             x86_platforms: linux/amd64
             arm_platforms: linux/arm64
 
-          - name: deepspeed-runtime
-            dockerfile: cmd/runtimes/deepspeed/Dockerfile
-            x86_platforms: linux/amd64
-            arm_platforms: linux/arm64
+          # - name: deepspeed-runtime
+          #   dockerfile: cmd/runtimes/deepspeed/Dockerfile
+          #   x86_platforms: linux/amd64
+          #   arm_platforms: linux/arm64
 
           - name: xgboost-runtime
             dockerfile: cmd/runtimes/xgboost/Dockerfile
@@ -55,10 +55,10 @@ jobs:
             dockerfile: cmd/trainers/torchtune/Dockerfile
             x86_platforms: linux/amd64
 
-          - name: data-cache
-            dockerfile: cmd/data_cache/Dockerfile
-            x86_platforms: linux/amd64
-            arm_platforms: linux/arm64
+          # - name: data-cache
+          #   dockerfile: cmd/data_cache/Dockerfile
+          #   x86_platforms: linux/amd64
+          #   arm_platforms: linux/arm64
 
         arch:
           - name: x86
@@ -103,11 +103,11 @@ jobs:
           - name: trainer-controller-manager
           - name: model-initializer
           - name: dataset-initializer
-          - name: deepspeed-runtime
+          # - name: deepspeed-runtime
           - name: xgboost-runtime
           - name: mlx-runtime
           - name: torchtune-trainer
-          - name: data-cache
+          # - name: data-cache
 
     steps:
       - name: Download digests
@@ -139,8 +139,8 @@ jobs:
         uses: docker/metadata-action@v5
         with:
           images: |
-            ghcr.io/kubeflow/trainer/${{ matrix.component.name }}
-            docker.io/kubeflow/${{ matrix.component.name }}
+            ghcr.io/jaiakash/trainer/${{ matrix.component.name }}
+            docker.io/akashjaiswal03/${{ matrix.component.name }}
           tags: |
             type=ref,event=tag
             type=raw,value=latest,enable={{is_default_branch}}
@@ -150,8 +150,8 @@ jobs:
         working-directory: /tmp/digests
         run: |
           docker buildx imagetools create $(jq -cr '.tags | map("-t " + .) | join(" ")' <<< '${{ steps.meta.outputs.json }}') \
-            $(printf 'ghcr.io/kubeflow/trainer/${{ matrix.component.name }}@sha256:%s ' *)
+            $(printf 'ghcr.io/jaiakash/trainer/${{ matrix.component.name }}@sha256:%s ' *)
 
       - name: Inspect image
         run: |
-          docker buildx imagetools inspect ghcr.io/kubeflow/trainer/${{ matrix.component.name }}:${{ steps.meta.outputs.version }}
+          docker buildx imagetools inspect ghcr.io/jaiakash/trainer/${{ matrix.component.name }}:${{ steps.meta.outputs.version }}
