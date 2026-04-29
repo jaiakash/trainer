@@ -49,10 +49,11 @@ jobs:
             dockerfile: cmd/runtimes/mlx/Dockerfile
             x86_platforms: linux/amd64
 
+          # TODO: (jaiakash) pytorch/pytorch CUDA base image does not support arm64
+          # Check this https://github.com/orgs/pytorch/packages/container/pytorch/574847194?tag=2.9.1-cuda12.8-cudnn9-runtime
           - name: torchtune-trainer
             dockerfile: cmd/trainers/torchtune/Dockerfile
             x86_platforms: linux/amd64
-            arm_platforms: linux/arm64
 
           - name: data-cache
             dockerfile: cmd/data_cache/Dockerfile
@@ -71,6 +72,11 @@ jobs:
         exclude:
           - component:
               name: mlx-runtime
+            arch:
+              name: arm64
+
+          - component:
+              name: torchtune-trainer
             arch:
               name: arm64
 
@@ -126,7 +132,7 @@ jobs:
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
       - name: Set Up Docker Buildx
-        uses: docker/setup-buildx-action@v3
+        uses: docker/setup-buildx-action@v4
 
       - name: Add Docker Tags
         id: meta

@@ -117,13 +117,13 @@ jobs:
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
       - name: Set Up Docker Buildx
-        uses: docker/setup-buildx-action@v3
+        uses: docker/setup-buildx-action@v4
 
       # Build and push by digest only (no tags). Tags are created in the merge job.
       - name: Build and Push (by digest)
         if: env.SHOULD_PUBLISH == 'true'
         id: build
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@v7
         with:
           platforms: ${{ inputs.platforms }}
           context: ${{ inputs.context }}
@@ -136,7 +136,7 @@ jobs:
       # On PRs, only validate the build (no push, no digest export).
       - name: Build (PR validation)
         if: env.SHOULD_PUBLISH != 'true'
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@v7
         with:
           platforms: ${{ inputs.platforms }}
           context: ${{ inputs.context }}
