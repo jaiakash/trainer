@@ -1,3 +1,17 @@
+# Copyright The Kubeflow Authors.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
 import logging
 from urllib.parse import urlparse
 
@@ -21,9 +35,14 @@ class HuggingFace(utils.DatasetProvider):
 
     def download_dataset(self):
         storage_uri_parsed = urlparse(self.config.storage_uri)
-        dataset_uri = (
-            storage_uri_parsed.netloc + "/" + storage_uri_parsed.path.split("/")[1]
-        )
+        # Dataset id is either "name" or "namespace/name". Extra path segments are ignored.
+        segments = [storage_uri_parsed.netloc] + storage_uri_parsed.path.split("/")
+        dataset_uri = "/".join([s for s in segments if s][:2])
+        if not dataset_uri:
+            raise ValueError(
+                f"Invalid HuggingFace dataset URI: {self.config.storage_uri}. "
+                "Expected hf://<dataset> or hf://<namespace>/<dataset>"
+            )
 
         logging.info(f"Downloading dataset: {dataset_uri}")
         logging.info("-" * 40)

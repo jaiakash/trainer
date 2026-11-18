@@ -1,19 +1,56 @@
+# Copyright The Kubeflow Authors.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
 name: Build and Publish Images
 
+# TEST ONLY: this branch runs the workflow on the jaiakash/trainer fork with GitHub-hosted runners.
 on:
   workflow_dispatch:
-
-permissions:
-  contents: read
-  packages: write
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
+    inputs:
+      publish:
+        description: push the built images to the fork registries
+        required: false
+        type: boolean
+        default: true
+  workflow_call:
+    inputs:
+      ref:
+        description: git ref (tag, branch, or SHA) to check out and build the images from
+        required: false
+        type: string
+        default: ""
+      version:
+        description: explicit image tag (e.g. v2.3.0-rc.0) to publish
+        required: false
+        type: string
+        default: ""
+      publish:
+        description: whether to push the built images to registries
+        required: false
+        type: boolean
+        default: false
 
 jobs:
+  # Build every image on a native runner for each architecture to avoid slow QEMU emulation.
+  # Images are pushed by digest only, the tags are created by the merge-manifests job.
   build-and-publish:
+    name: Build and Publish Images
+    if: github.repository == 'jaiakash/trainer'
 
+    permissions:
+      contents: read
+      packages: write
 
     strategy:
       fail-fast: false
@@ -21,7 +58,7 @@ jobs:
         component:
           - name: trainer-controller-manager
             dockerfile: cmd/trainer-controller-manager/Dockerfile
-            x86_platforms: linux/amd64
+            x86_platforms: linux/amd64,linux/ppc64le
             arm_platforms: linux/arm64
 
           - name: model-initializer
@@ -34,31 +71,32 @@ jobs:
             x86_platforms: linux/amd64
             arm_platforms: linux/arm64
 
-          # - name: deepspeed-runtime
-          #   dockerfile: cmd/runtimes/deepspeed/Dockerfile
-          #   x86_platforms: linux/amd64
-          #   arm_platforms: linux/arm64
+          - name: deepspeed-runtime
+            dockerfile: cmd/runtimes/deepspeed/Dockerfile
+            x86_platforms: linux/amd64
+            arm_platforms: linux/arm64
 
           - name: xgboost-runtime
             dockerfile: cmd/runtimes/xgboost/Dockerfile
             x86_platforms: linux/amd64
             arm_platforms: linux/arm64
 
-          # TODO (andreyvelich): mlx[cuda] doesn't support arm at the moment: https://github.com/ml-explore/mlx/issues/2469
+          # TODO (andreyvelich): mlx-data doesn't provide Linux arm wheels at the moment:
+          # https://pypi.org/project/mlx-data/#files
           - name: mlx-runtime
             dockerfile: cmd/runtimes/mlx/Dockerfile
             x86_platforms: linux/amd64
 
-          # TODO: (jaiakash) pytorch/pytorch CUDA base image does not support arm64
-          # Check this https://github.com/orgs/pytorch/packages/container/pytorch/574847194?tag=2.9.1-cuda12.8-cudnn9-runtime
+          # TODO (jaiakash): pytorch/pytorch CUDA base image doesn't support arm at the moment:
+          # https://hub.docker.com/r/pytorch/pytorch/tags?name=2.9.1-cuda12.8-cudnn9-runtime
           - name: torchtune-trainer
             dockerfile: cmd/trainers/torchtune/Dockerfile
             x86_platforms: linux/amd64
 
-          # - name: data-cache
-          #   dockerfile: cmd/data_cache/Dockerfile
-          #   x86_platforms: linux/amd64
-          #   arm_platforms: linux/arm64
+          - name: data-cache
+            dockerfile: cmd/data_cache/Dockerfile
+            x86_platforms: linux/amd64
+            arm_platforms: linux/arm64
 
         arch:
           - name: x86
@@ -85,73 +123,109 @@ jobs:
       component-name: ${{ matrix.component.name }}
       dockerfile: ${{ matrix.component.dockerfile }}
       platforms: ${{ matrix.component[matrix.arch.platforms_key] }}
-      context: .
+      arch: ${{ matrix.arch.name }}
       runs-on: ${{ matrix.arch.runs-on }}
-
+      # Checkout to the release tag when called from the release workflow.
+      ref: ${{ inputs.ref }}
+      publish: ${{ inputs.publish || github.event_name == 'push' }}
     secrets:
       DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
       DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
 
+  # Combine the per-architecture digests into a single multi-arch image and push the tags.
   merge-manifests:
+    name: Publish Multi-Arch Images
     needs: build-and-publish
-    if: always()
+    # Run even when some builds failed, so one broken component doesn't block the others.
+    # The Verify Digests step fails the components whose builds are incomplete.
+    if: ${{ !cancelled() && needs.build-and-publish.result != 'skipped' && (inputs.publish || github.event_name == 'push') }}
     runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+      packages: write
+
     strategy:
       fail-fast: false
       matrix:
-        component:
-          - name: trainer-controller-manager
-          - name: model-initializer
-          - name: dataset-initializer
-          # - name: deepspeed-runtime
-          - name: xgboost-runtime
-          - name: mlx-runtime
-          - name: torchtune-trainer
-          # - name: data-cache
+        # digests is the number of runner architectures the component is built on.
+        include:
+          - component-name: trainer-controller-manager
+            digests: 2
+          - component-name: model-initializer
+            digests: 2
+          - component-name: dataset-initializer
+            digests: 2
+          - component-name: deepspeed-runtime
+            digests: 2
+          - component-name: xgboost-runtime
+            digests: 2
+          - component-name: mlx-runtime
+            digests: 1
+          - component-name: torchtune-trainer
+            digests: 1
+          - component-name: data-cache
+            digests: 2
 
     steps:
-      - name: Download digests
-        uses: actions/download-artifact@v4
+      - name: Download Digests
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8
         with:
-          path: /tmp/digests
-          pattern: digests-${{ matrix.component.name }}-*
+          path: ${{ runner.temp }}/digests
+          pattern: digests-${{ matrix.component-name }}-*
           merge-multiple: true
 
+      - name: Verify Digests
+        env:
+          COMPONENT: ${{ matrix.component-name }}
+          EXPECTED: ${{ matrix.digests }}
+        run: |
+          actual=$(find "${RUNNER_TEMP}/digests" -type f 2>/dev/null | wc -l)
+          if [ "${actual}" -ne "${EXPECTED}" ]; then
+            echo "::error::Expected ${EXPECTED} image digests for ${COMPONENT}, found ${actual}"
+            exit 1
+          fi
+
       - name: GHCR Login
-        uses: docker/login-action@v4
+        uses: docker/login-action@81c6f93d4bc991e510b342a00b419b3bb4efc5c6 # v4
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Docker Hub Login
-        uses: docker/login-action@v4
+        uses: docker/login-action@81c6f93d4bc991e510b342a00b419b3bb4efc5c6 # v4
         with:
           registry: docker.io
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
       - name: Set Up Docker Buildx
-        uses: docker/setup-buildx-action@v4
+        uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # v3
 
       - name: Add Docker Tags
         id: meta
-        uses: docker/metadata-action@v5
+        uses: docker/metadata-action@c299e40c65443455700f0fdfc63efafe5b349051 # v5
         with:
           images: |
-            ghcr.io/jaiakash/trainer/${{ matrix.component.name }}
-            docker.io/akashjaiswal03/${{ matrix.component.name }}
+            ghcr.io/jaiakash/trainer/${{ matrix.component-name }}
+            docker.io/akashjaiswal03/${{ matrix.component-name }}
           tags: |
             type=ref,event=tag
-            type=raw,value=latest,enable={{is_default_branch}}
-            type=sha
+            type=sha,enable=${{ inputs.version == '' }}
+            type=raw,value=${{ inputs.version }},enable=${{ inputs.version != '' }}
 
-      - name: Create manifest list and push
-        working-directory: /tmp/digests
+      - name: Create Manifest List And Push
+        working-directory: ${{ runner.temp }}/digests
+        env:
+          IMAGE: ghcr.io/jaiakash/trainer/${{ matrix.component-name }}
         run: |
-          docker buildx imagetools create $(jq -cr '.tags | map("-t " + .) | join(" ")' <<< '${{ steps.meta.outputs.json }}') \
-            $(printf 'ghcr.io/jaiakash/trainer/${{ matrix.component.name }}@sha256:%s ' *)
+          docker buildx imagetools create \
+            $(jq -cr '.tags | map("-t " + .) | join(" ")' <<< "$DOCKER_METADATA_OUTPUT_JSON") \
+            $(printf "${IMAGE}@sha256:%s " *)
 
-      - name: Inspect image
-        run: |
-          docker buildx imagetools inspect ghcr.io/jaiakash/trainer/${{ matrix.component.name }}:${{ steps.meta.outputs.version }}
+      - name: Inspect Image
+        env:
+          IMAGE: ghcr.io/jaiakash/trainer/${{ matrix.component-name }}
+          VERSION: ${{ steps.meta.outputs.version }}
+        run: docker buildx imagetools inspect "${IMAGE}:${VERSION}"
